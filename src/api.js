@@ -35,22 +35,30 @@ export async function getPendingScores() {
   return res.json();
 }
 
-export async function approveScore(id, password) {
-  const res = await fetch(`${API_URL}/approve`, {
+export async function approveScore(id) {
+  return fetch(`${API_URL}/approve`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, password })
+    body: JSON.stringify({
+      id,
+      adminPassword: localStorage.getItem("adminPassword")
+    })
   });
-
-  return res.json();
 }
 
 export async function updateScore(id, points) {
-  const res = await fetch(`${API_URL}/updateScore`, {
+  return fetch(`${API_URL}/updateScore`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, points })
+    body: JSON.stringify({
+      id,
+      points,
+      adminPassword: localStorage.getItem("adminPassword")
+    })
   });
+}
 
+export async function getLeaderboard() {
+  const res = await fetch(`${API_URL}/leaderboard`);
   return res.json();
 }
