@@ -8,6 +8,12 @@ export default function QuizPage() {
   const [team, setTeam] = useState(null);
   const [message, setMessage] = useState("");
 
+  // 🧠 hent sendt runder
+  const [submittedRounds, setSubmittedRounds] = useState(() => {
+    const saved = localStorage.getItem("submittedRounds");
+    return saved ? JSON.parse(saved) : {};
+  });
+
   async function handleStart() {
     const res = await login(password);
 
@@ -42,17 +48,42 @@ export default function QuizPage() {
 
   async function handleScore(round, points) {
     const teamId = localStorage.getItem("teamId");
+
+    if (!teamId) {
+      setMessage("Ingen team funnet");
+      return;
+    }
+
+    if (submittedRounds[round]) {
+      setMessage("Du har allerede sendt denne runden");
+      return;
+    }
+
     await submitScore(Number(teamId), round, points);
+
+    const updated = {
+      ...submittedRounds,
+      [round]: true
+    };
+
+    setSubmittedRounds(updated);
+    localStorage.setItem("submittedRounds", JSON.stringify(updated));
+
     setMessage(`Poeng sendt for runde ${round}`);
   }
 
+  // 🔐 LOGIN VIEW
   if (!team) {
     return (
       <div className="container">
         <h1>🍺 Fjøset Quiz</h1>
+
         {message && <p>{message}</p>}
 
-        <input placeholder="Lagnavn" onChange={e => setTeamName(e.target.value)} />
+        <input
+          placeholder="Lagnavn"
+          onChange={e => setTeamName(e.target.value)}
+        />
 
         <input
           type="number"
@@ -62,29 +93,56 @@ export default function QuizPage() {
           onChange={e => setParticipants(e.target.value)}
         />
 
-        <input placeholder="Passord" onChange={e => setPassword(e.target.value)} />
+        <input
+          placeholder="Passord"
+          onChange={e => setPassword(e.target.value)}
+        />
 
         <button onClick={handleStart}>Start quiz</button>
       </div>
     );
   }
 
+  // 🧠 QUIZ VIEW
   return (
     <div className="container">
       <h2>{team.name || team.Name}</h2>
 
-      {[1, 2, 3].map(r => (
-        <div key={r}>
-          <h3>Runde {r}</h3>
-          <input type="number" id={`r${r}`} />
-          <button onClick={() => {
-            const val = document.getElementById(`r${r}`).value;
-            handleScore(r, Number(val));
-          }}>
-            Send inn
-          </button>
-        </div>
-      ))}
+      {[1, 2, 3].map(r => {
+        const isSubmitted = submittedRounds[r];
+
+        return (
+          <div key={r} style={{ marginBottom: "20px" }}>
+            <h3>Runde {r}</h3>
+
+            <input
+              type="number"
+              id={`r${r}`}
+              placeholder="Poeng"
+              disabled={isSubmitted}
+              style={{
+                opacity: isSubmitted ? 0.5 : 1
+              }}
+            />
+
+            <button
+              disabled={isSubmitted}
+              style={{
+                opacity: isSubmitted ? 0.5 : 1,
+                cursor: isSubmitted ? "not-allowed" : "pointer"
+              }}
+              onClick={() => {
+                const val = document.getElementById(`r${r}`).value;
+                handleScore(r, Number(val));
+              }}
+            >
+              {isSubmitted ? "Sendt ✔" : "Send inn"}
+            </button>
+          </div>
+        );
+      })}
+
+      {message && <p>{message}</p>}
     </div>
   );
 }
