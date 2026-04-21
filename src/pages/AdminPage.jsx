@@ -29,21 +29,29 @@ export default function AdminPage() {
     setIsAdmin(false);
   }
 
-  // 🧠 grouping
+  // 🧠 grouping + deltakerinfo
   function groupByTeam(scores) {
     const teams = {};
 
     scores.forEach(s => {
-      if (!teams[s.teamName]) {
-        teams[s.teamName] = {
-          teamName: s.teamName,
+      const teamName = s.teamName;
+      const points = s.points ?? s.Points;
+      const participantCount = s.participantCount ?? s.ParticipantCount ?? 1;
+
+      if (!teams[teamName]) {
+        teams[teamName] = {
+          teamName,
+          participantCount,
           total: 0,
           rounds: []
         };
       }
 
-      teams[s.teamName].total += s.points;
-      teams[s.teamName].rounds.push(s);
+      teams[teamName].total += points;
+      teams[teamName].rounds.push({
+        ...s,
+        points
+      });
     });
 
     return Object.values(teams).sort((a, b) => b.total - a.total);
@@ -62,39 +70,39 @@ export default function AdminPage() {
     }
   }, [isAdmin]);
 
-async function handleUpdate(id) {
-  setLoadingId(id);
+  async function handleUpdate(id) {
+    setLoadingId(id);
 
-  const res = await updateScore(id, Number(newPoints));
+    const res = await updateScore(id, Number(newPoints));
 
-  if (res.status === 401) {
-    alert("Session utløpt – logg inn på nytt");
-    localStorage.removeItem("adminPassword");
-    setIsAdmin(false);
-    return;
+    if (res.status === 401) {
+      alert("Session utløpt – logg inn på nytt");
+      localStorage.removeItem("adminPassword");
+      setIsAdmin(false);
+      return;
+    }
+
+    setEditId(null);
+    setNewPoints("");
+    await load();
+    setLoadingId(null);
   }
 
-  setEditId(null);
-  setNewPoints("");
-  await load();
-  setLoadingId(null);
-}
+  async function handleApprove(id) {
+    setLoadingId(id);
 
-async function handleApprove(id) {
-  setLoadingId(id);
+    const res = await approveScore(id);
 
-  const res = await approveScore(id);
+    if (res.status === 401) {
+      alert("Session utløpt – logg inn på nytt");
+      localStorage.removeItem("adminPassword");
+      setIsAdmin(false);
+      return;
+    }
 
-  if (res.status === 401) {
-    alert("Session utløpt – logg inn på nytt");
-    localStorage.removeItem("adminPassword");
-    setIsAdmin(false);
-    return;
+    await load();
+    setLoadingId(null);
   }
-
-  await load();
-  setLoadingId(null);
-}
 
   // 🔐 LOGIN VIEW
   if (!isAdmin) {
@@ -135,13 +143,20 @@ async function handleApprove(id) {
           }}
         >
           <h2>{team.teamName}</h2>
+
+          {/* NYTT 👇 */}
+          <p>{team.participantCount} deltakere</p>
           <h3>Totalt: {team.total} poeng</h3>
+          <p>
+            Snitt:{" "}
+            {(team.total / team.participantCount).toFixed(1)}
+          </p>
 
           {team.rounds.map(s => (
-            <div key={s.id} style={{ marginTop: "10px" }}>
-              <p>Runde {s.round}</p>
+            <div key={s.id || s.Id} style={{ marginTop: "10px" }}>
+              <p>Runde {s.round || s.Round}</p>
 
-              {editId === s.id ? (
+              {editId === (s.id || s.Id) ? (
                 <>
                   <input
                     type="number"
@@ -150,30 +165,36 @@ async function handleApprove(id) {
                   />
 
                   <button
-                    onClick={() => handleUpdate(s.id)}
-                    disabled={loadingId === s.id}
+                    onClick={() => handleUpdate(s.id || s.Id)}
+                    disabled={loadingId === (s.id || s.Id)}
                   >
-                    {loadingId === s.id ? "..." : "Lagre"}
+                    {loadingId === (s.id || s.Id) ? "..." : "Lagre"}
                   </button>
                 </>
               ) : (
                 <>
-                  <p><strong>{s.points} poeng</strong></p>
+                  <p>
+                    <strong>{s.points} poeng</strong>
+                  </p>
 
-                  <button onClick={() => {
-                    setEditId(s.id);
-                    setNewPoints(s.points);
-                  }}>
+                  <button
+                    onClick={() => {
+                      setEditId(s.id || s.Id);
+                      setNewPoints(s.points);
+                    }}
+                  >
                     ✏️ Endre
                   </button>
                 </>
               )}
 
               <button
-                onClick={() => handleApprove(s.id)}
-                disabled={loadingId === s.id}
+                onClick={() => handleApprove(s.id || s.Id)}
+                disabled={loadingId === (s.id || s.Id)}
               >
-                {loadingId === s.id ? "..." : "✔️ Godkjenn"}
+                {loadingId === (s.id || s.Id)
+                  ? "..."
+                  : "✔️ Godkjenn"}
               </button>
             </div>
           ))}
