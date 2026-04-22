@@ -62,3 +62,33 @@ export async function getLeaderboard() {
   const res = await fetch(`${API_URL}/leaderboard`);
   return res.json();
 }
+
+export async function getActiveSession() {
+  const res = await fetch(`${API_URL}/getActiveSession`);
+  return res.json();
+}
+
+export async function closeSession() {
+  const res = await fetch(`${API_URL}/closeSession`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      adminPassword: localStorage.getItem("adminPassword")
+    })
+  });
+
+  return res.json();
+}
+
+export async function createSession(password) {
+  const res = await fetch(`${API_URL}/createSession`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      password,
+      adminPassword: localStorage.getItem("adminPassword")
+    })
+  });
+
+  return res.json();
+}
