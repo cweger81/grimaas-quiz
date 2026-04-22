@@ -10,21 +10,29 @@ export default function Leaderboard() {
       setData(res);
     };
 
-    load();
-    const i = setInterval(load, 5000);
-    return () => clearInterval(i);
+    const initialLoadId = setTimeout(() => {
+      void load();
+    }, 0);
+
+    const intervalId = setInterval(() => {
+      void load();
+    }, 5000);
+
+    return () => {
+      clearTimeout(initialLoadId);
+      clearInterval(intervalId);
+    };
   }, []);
 
-  // 📅 grupper per dato
-  function groupByDate(data) {
+  function groupByDate(items) {
     const groups = {};
 
-    data.forEach(item => {
+    items.forEach(item => {
       const date = new Date(item.date).toLocaleDateString("no-NO", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric"
-});
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      });
 
       if (!groups[date]) {
         groups[date] = [];
@@ -33,7 +41,6 @@ export default function Leaderboard() {
       groups[date].push(item);
     });
 
-    // 🏆 sorter per dato
     Object.keys(groups).forEach(date => {
       groups[date].sort((a, b) => b.total - a.total);
     });
@@ -44,41 +51,42 @@ export default function Leaderboard() {
   const grouped = groupByDate(data);
 
   return (
-    <div className="container">
-      <h1>🏆 Leaderboard</h1>
+    <div className="container leaderboard-page">
+      <div className="leaderboard-shell">
+        <p className="quiz-eyebrow">Poengtavle</p>
+        <h1>Leaderboard</h1>
 
-      {Object.entries(grouped).map(([date, teams]) => (
-        <div key={date} style={{ marginBottom: "40px" }}>
-          <h2 style={{ borderBottom: "2px solid #444", paddingBottom: "5px" }}>
-            {date}
-          </h2>
+        {Object.entries(grouped).map(([date, teams]) => (
+          <section key={date} className="leaderboard-section">
+            <h2 className="leaderboard-date">{date}</h2>
 
-          {teams.map((t, i) => {
-            const isTop3 = i < 3;
+            {teams.map((team, index) => {
+              const isTop3 = index < 3;
 
-            return (
-              <div
-                key={t.id}
-                style={{
-                  fontSize: isTop3 ? "22px" : "18px",
-                  fontWeight: isTop3 ? "bold" : "normal",
-                  color:
-                    i === 0
-                      ? "#ffd700"   // 🥇 gull
-                      : i === 1
-                      ? "#c0c0c0"   // 🥈 sølv
-                      : i === 2
-                      ? "#cd7f32"   // 🥉 bronse
-                      : "#fff",
-                  marginTop: "8px"
-                }}
-              >
-                #{i + 1} {t.name} - {t.total}
-              </div>
-            );
-          })}
-        </div>
-      ))}
+              return (
+                <div
+                  key={team.id}
+                  className={`leaderboard-row${isTop3 ? " is-top3" : ""}`}
+                  style={{
+                    color:
+                      index === 0
+                        ? "#ffd700"
+                        : index === 1
+                        ? "#c0c0c0"
+                        : index === 2
+                        ? "#cd7f32"
+                        : "var(--text)"
+                  }}
+                >
+                  <span>#{index + 1}</span>
+                  <span className="leaderboard-name">{team.name}</span>
+                  <span>{team.total}</span>
+                </div>
+              );
+            })}
+          </section>
+        ))}
+      </div>
     </div>
   );
 }
