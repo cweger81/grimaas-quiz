@@ -238,9 +238,9 @@ export default function QuizPage() {
         <div className="quiz-shell">
           <div className="quiz-card">
             <p className="quiz-eyebrow">Grimaas Bryggeri</p>
-            <h1>Fjoset Quiz</h1>
+            <h1>Fjøset Quiz</h1>
             <p className="quiz-intro">
-              Logg inn laget ditt og send inn poeng etter hver runde. Passordet star pa quizen.
+              Logg inn laget ditt og send inn poeng etter hver runde. Passordet står på quiz-arket.
             </p>
 
             {message && <p className="quiz-message">{message}</p>}
