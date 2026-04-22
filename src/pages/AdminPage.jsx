@@ -22,6 +22,17 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  function parsePoints(value) {
+    const normalized = String(value).replace(",", ".").trim();
+    const points = Number(normalized);
+
+    if (!normalized || !Number.isFinite(points) || points < 0) {
+      return null;
+    }
+
+    return points;
+  }
+
   async function load() {
     const [pendingScores, session] = await Promise.all([
       getPendingScores(),
@@ -117,7 +128,14 @@ export default function AdminPage() {
     setLoadingId(id);
 
     try {
-      const result = await updateScore(id, Number(newPoints));
+      const parsedPoints = parsePoints(newPoints);
+
+      if (parsedPoints === null) {
+        alert("Skriv inn gyldige poeng, for eksempel 13,5.");
+        return;
+      }
+
+      const result = await updateScore(id, parsedPoints);
 
       if (result.status === 401) {
         alert("Admin-innloggingen utlop. Logg inn pa nytt.");
@@ -257,6 +275,9 @@ export default function AdminPage() {
                 <>
                   <input
                     type="number"
+                    inputMode="decimal"
+                    step="0.1"
+                    min="0"
                     value={newPoints}
                     onChange={e => setNewPoints(e.target.value)}
                   />

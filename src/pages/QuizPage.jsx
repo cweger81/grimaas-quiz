@@ -34,6 +34,17 @@ function clearStoredQuizState(targetSessionId) {
   localStorage.removeItem(ACTIVE_SESSION_KEY);
 }
 
+function parsePoints(value) {
+  const normalized = value.replace(",", ".").trim();
+  const points = Number(normalized);
+
+  if (!normalized || !Number.isFinite(points) || points < 0) {
+    return null;
+  }
+
+  return points;
+}
+
 export default function QuizPage() {
   const [password, setPassword] = useState("");
   const [teamName, setTeamName] = useState("");
@@ -164,7 +175,7 @@ export default function QuizPage() {
     }
 
     const teamId = localStorage.getItem(getStorageKey(sessionId, "teamId"));
-    const points = Number(roundInputs[round]);
+    const points = parsePoints(roundInputs[round]);
 
     if (!teamId) {
       setMessage("Ingen team funnet");
@@ -176,8 +187,8 @@ export default function QuizPage() {
       return;
     }
 
-    if (!Number.isFinite(points) || points < 0) {
-      setMessage("Skriv inn gyldige poeng");
+    if (points === null) {
+      setMessage("Skriv inn gyldige poeng, for eksempel 13,5");
       return;
     }
 
@@ -282,6 +293,9 @@ export default function QuizPage() {
                   <input
                     type="number"
                     placeholder="Poeng"
+                    inputMode="decimal"
+                    step="0.1"
+                    min="0"
                     value={roundInputs[round]}
                     disabled={isSubmitted}
                     onChange={e =>
