@@ -105,77 +105,103 @@ export default function QuizPage() {
 
   if (!team) {
     return (
-      <div className="container">
-        <h1>Fjoset Quiz</h1>
+      <div className="container quiz-page">
+        <div className="quiz-shell">
+          <div className="quiz-card">
+            <p className="quiz-eyebrow">Grimaas Bryggeri</p>
+            <h1>Fjøset Quiz</h1>
+            <p className="quiz-intro">
+              Logg inn laget ditt og send inn poeng fortløpende gjennom kvelden.
+            </p>
 
-        {message && <p>{message}</p>}
+            {message && <p className="quiz-message">{message}</p>}
 
-        <input
-          placeholder="Lagnavn"
-          value={teamName}
-          onChange={e => setTeamName(e.target.value)}
-        />
+            <div className="quiz-form">
+              <input
+                placeholder="Lagnavn"
+                value={teamName}
+                onChange={e => setTeamName(e.target.value)}
+              />
 
-        <input
-          type="number"
-          placeholder="Antall deltakere (1-6)"
-          min="1"
-          max="6"
-          value={participants}
-          onChange={e => setParticipants(e.target.value)}
-        />
+              <input
+                type="number"
+                placeholder="Antall deltakere (1-6)"
+                min="1"
+                max="6"
+                value={participants}
+                onChange={e => setParticipants(e.target.value)}
+              />
 
-        <input
-          placeholder="Passord"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-        />
+              <input
+                placeholder="Passord"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+              />
+            </div>
 
-        <button onClick={handleStart}>Start quiz</button>
+            <button className="quiz-primary-button" onClick={handleStart}>
+              Start quiz
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container">
-      <h2>{team.name || team.Name}</h2>
+    <div className="container quiz-page">
+      <div className="quiz-shell">
+        <div className="quiz-card quiz-card-wide">
+          <div className="quiz-header">
+            <div>
+              <p className="quiz-eyebrow">Lag registrert</p>
+              <h2>{team.name || team.Name}</h2>
+            </div>
 
-      {[1, 2, 3].map(round => {
-        const isSubmitted = submittedRounds[round];
-
-        return (
-          <div key={round} style={{ marginBottom: "20px" }}>
-            <h3>Runde {round}</h3>
-
-            <input
-              type="number"
-              placeholder="Poeng"
-              value={roundInputs[round]}
-              disabled={isSubmitted}
-              style={{ opacity: isSubmitted ? 0.5 : 1 }}
-              onChange={e =>
-                setRoundInputs(current => ({
-                  ...current,
-                  [round]: e.target.value
-                }))
-              }
-            />
-
-            <button
-              disabled={isSubmitted}
-              style={{
-                opacity: isSubmitted ? 0.5 : 1,
-                cursor: isSubmitted ? "not-allowed" : "pointer"
-              }}
-              onClick={() => handleScore(round)}
-            >
-              {isSubmitted ? "Sendt" : "Send inn"}
-            </button>
+            <div className="quiz-badge">
+              {participants} deltakere
+            </div>
           </div>
-        );
-      })}
 
-      {message && <p>{message}</p>}
+          <div className="quiz-round-grid">
+            {[1, 2, 3].map(round => {
+              const isSubmitted = submittedRounds[round];
+
+              return (
+                <div
+                  key={round}
+                  className={`quiz-round-card${isSubmitted ? " is-submitted" : ""}`}
+                >
+                  <p className="quiz-round-label">Runde {round}</p>
+
+                  <input
+                    type="number"
+                    placeholder="Poeng"
+                    value={roundInputs[round]}
+                    disabled={isSubmitted}
+                    onChange={e =>
+                      setRoundInputs(current => ({
+                        ...current,
+                        [round]: e.target.value
+                      }))
+                    }
+                  />
+
+                  <button
+                    className="quiz-primary-button"
+                    disabled={isSubmitted}
+                    onClick={() => handleScore(round)}
+                  >
+                    {isSubmitted ? "Sendt" : "Send inn"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {message && <p className="quiz-message">{message}</p>}
+        </div>
+      </div>
     </div>
   );
 }
