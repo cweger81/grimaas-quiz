@@ -200,6 +200,18 @@ input {
   font-weight: 700;
 }
 
+.quiz-secondary-button {
+  margin-top: 18px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.quiz-secondary-button:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
 .quiz-primary-button:disabled {
   opacity: 0.55;
   cursor: not-allowed;

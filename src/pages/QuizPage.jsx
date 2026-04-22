@@ -1,8 +1,37 @@
-import { useState } from "react";
-import { login, createTeam, submitScore } from "../api";
+import { useEffect, useState } from "react";
+import { createTeam, getActiveSession, login, submitScore } from "../api";
 
 function getStorageKey(sessionId, suffix) {
   return `quiz:${sessionId}:${suffix}`;
+}
+
+const ACTIVE_SESSION_KEY = "quiz:activeSessionId";
+
+function readStoredJson(key, fallback) {
+  const rawValue = localStorage.getItem(key);
+
+  if (!rawValue) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(rawValue);
+  } catch {
+    return fallback;
+  }
+}
+
+function clearStoredQuizState(targetSessionId) {
+  const sessionId = targetSessionId || localStorage.getItem(ACTIVE_SESSION_KEY);
+
+  if (sessionId) {
+    localStorage.removeItem(getStorageKey(sessionId, "teamId"));
+    localStorage.removeItem(getStorageKey(sessionId, "team"));
+    localStorage.removeItem(getStorageKey(sessionId, "participants"));
+    localStorage.removeItem(getStorageKey(sessionId, "submittedRounds"));
+  }
+
+  localStorage.removeItem(ACTIVE_SESSION_KEY);
 }
 
 export default function QuizPage() {
@@ -18,6 +47,61 @@ export default function QuizPage() {
     3: ""
   });
   const [submittedRounds, setSubmittedRounds] = useState({});
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function restoreExistingTeam() {
+      const activeSession = await getActiveSession();
+      const storedSessionId = localStorage.getItem(ACTIVE_SESSION_KEY);
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (!activeSession?.Id) {
+        clearStoredQuizState(storedSessionId);
+        return;
+      }
+
+      const activeId = String(activeSession.Id);
+
+      if (!storedSessionId || storedSessionId !== activeId) {
+        clearStoredQuizState(storedSessionId);
+        return;
+      }
+
+      const storedTeamId = localStorage.getItem(getStorageKey(activeId, "teamId"));
+      const storedTeam = readStoredJson(getStorageKey(activeId, "team"), null);
+      const storedParticipants = localStorage.getItem(
+        getStorageKey(activeId, "participants")
+      );
+      const storedRounds = readStoredJson(
+        getStorageKey(activeId, "submittedRounds"),
+        {}
+      );
+
+      if (!storedTeamId || !storedTeam) {
+        clearStoredQuizState(activeId);
+        return;
+      }
+
+      setSessionId(activeSession.Id);
+      setTeam(storedTeam);
+      setParticipants(
+        storedParticipants ||
+          String(storedTeam.participantCount || storedTeam.ParticipantCount || "")
+      );
+      setSubmittedRounds(storedRounds);
+      setMessage("Lag og runder ble gjenopprettet for denne quizen.");
+    }
+
+    void restoreExistingTeam();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   async function handleStart() {
     if (!teamName.trim() || !participants) {
@@ -48,6 +132,7 @@ export default function QuizPage() {
     const nextTeamId = teamRes.id || teamRes.Id;
     const nextSubmittedRounds = {};
 
+    localStorage.setItem(ACTIVE_SESSION_KEY, String(session.sessionId));
     localStorage.setItem(
       getStorageKey(session.sessionId, "teamId"),
       String(nextTeamId)
@@ -55,6 +140,14 @@ export default function QuizPage() {
     localStorage.setItem(
       getStorageKey(session.sessionId, "submittedRounds"),
       JSON.stringify(nextSubmittedRounds)
+    );
+    localStorage.setItem(
+      getStorageKey(session.sessionId, "team"),
+      JSON.stringify(teamRes)
+    );
+    localStorage.setItem(
+      getStorageKey(session.sessionId, "participants"),
+      String(participantCount)
     );
 
     setSessionId(session.sessionId);
@@ -101,6 +194,18 @@ export default function QuizPage() {
       JSON.stringify(updatedRounds)
     );
     setMessage(`Poeng sendt for runde ${round}`);
+  }
+
+  function handleResetDevice() {
+    clearStoredQuizState(String(sessionId || ""));
+    setPassword("");
+    setTeamName("");
+    setParticipants("");
+    setTeam(null);
+    setSessionId(null);
+    setRoundInputs({ 1: "", 2: "", 3: "" });
+    setSubmittedRounds({});
+    setMessage("Denne enheten er nullstilt for aktiv quiz.");
   }
 
   if (!team) {
@@ -200,6 +305,10 @@ export default function QuizPage() {
           </div>
 
           {message && <p className="quiz-message">{message}</p>}
+
+          <button className="quiz-secondary-button" onClick={handleResetDevice}>
+            Bytt lag pa denne enheten
+          </button>
         </div>
       </div>
     </div>
