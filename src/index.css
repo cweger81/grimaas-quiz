@@ -40,3 +40,15 @@ input {
   justify-content: center;
   height: 100vh;
 }
+
+.admin-page {
+  justify-content: flex-start;
+  min-height: 100vh;
+  height: auto;
+  padding: 24px 16px 40px;
+  box-sizing: border-box;
+}
+
+.admin-page > * {
+  width: min(720px, 100%);
+}

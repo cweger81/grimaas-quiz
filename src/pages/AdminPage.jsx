@@ -201,7 +201,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="container">
+    <div className="container admin-page">
       <h1>Admin</h1>
 
       <button onClick={logout}>Logg ut</button>
