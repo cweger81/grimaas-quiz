@@ -219,15 +219,28 @@ export default function QuizPage() {
     setMessage("Denne enheten er nullstilt for aktiv quiz.");
   }
 
+  function renderLeaderboardLink() {
+    return (
+      <a
+        className="quiz-link-button"
+        href="/leaderboard"
+        target="_blank"
+        rel="noreferrer"
+      >
+        Poengtavle
+      </a>
+    );
+  }
+
   if (!team) {
     return (
       <div className="container quiz-page">
         <div className="quiz-shell">
           <div className="quiz-card">
             <p className="quiz-eyebrow">Grimaas Bryggeri</p>
-            <h1>Fjøset Quiz</h1>
+            <h1>Fjoset Quiz</h1>
             <p className="quiz-intro">
-              Logg inn laget ditt og send inn poeng etter hver runde. Passordet står på quizen.
+              Logg inn laget ditt og send inn poeng etter hver runde. Passordet star pa quizen.
             </p>
 
             {message && <p className="quiz-message">{message}</p>}
@@ -255,9 +268,13 @@ export default function QuizPage() {
               />
             </div>
 
-            <button className="quiz-primary-button" onClick={handleStart}>
-              Start quiz
-            </button>
+            <div className="quiz-button-row">
+              <button className="quiz-primary-button" onClick={handleStart}>
+                Start quiz
+              </button>
+
+              {renderLeaderboardLink()}
+            </div>
           </div>
         </div>
       </div>
@@ -274,9 +291,7 @@ export default function QuizPage() {
               <h2>{team.name || team.Name}</h2>
             </div>
 
-            <div className="quiz-badge">
-              {participants} deltakere
-            </div>
+            <div className="quiz-badge">{participants} deltakere</div>
           </div>
 
           <div className="quiz-round-grid">
@@ -320,8 +335,10 @@ export default function QuizPage() {
 
           {message && <p className="quiz-message">{message}</p>}
 
+          {renderLeaderboardLink()}
+
           <button className="quiz-secondary-button" onClick={handleResetDevice}>
-            Bytt lag på denne enheten
+            Bytt lag pa denne enheten
           </button>
         </div>
       </div>
