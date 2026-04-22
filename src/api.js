@@ -1,4 +1,17 @@
-const API_URL = "https://grimaas-quiz-api-bxa6cmacfja0fuc9.norwayeast-01.azurewebsites.net/api";
+const API_URL = (
+  import.meta.env.VITE_API_URL ||
+  "https://grimaas-quiz-api-bxa6cmacfja0fuc9.norwayeast-01.azurewebsites.net/api"
+).replace(/\/$/, "");
+
+async function readJson(res) {
+  const contentType = res.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    return res.json();
+  }
+
+  return null;
+}
 
 export async function login(password) {
   const res = await fetch(`${API_URL}/login`, {
@@ -8,6 +21,20 @@ export async function login(password) {
   });
 
   return res.json();
+}
+
+export async function adminLogin(password) {
+  const res = await fetch(`${API_URL}/adminLogin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password })
+  });
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
 }
 
 export async function createTeam(name, sessionId, participantCount) {
@@ -36,7 +63,7 @@ export async function getPendingScores() {
 }
 
 export async function approveScore(id) {
-  return fetch(`${API_URL}/approve`, {
+  const res = await fetch(`${API_URL}/approve`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -44,10 +71,16 @@ export async function approveScore(id) {
       adminPassword: localStorage.getItem("adminPassword")
     })
   });
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
 }
 
 export async function updateScore(id, points) {
-  return fetch(`${API_URL}/updateScore`, {
+  const res = await fetch(`${API_URL}/updateScore`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -56,6 +89,12 @@ export async function updateScore(id, points) {
       adminPassword: localStorage.getItem("adminPassword")
     })
   });
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
 }
 
 export async function getLeaderboard() {
@@ -77,7 +116,11 @@ export async function closeSession() {
     })
   });
 
-  return res.json();
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
 }
 
 export async function createSession(password) {
@@ -90,5 +133,9 @@ export async function createSession(password) {
     })
   });
 
-  return res.json();
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
 }

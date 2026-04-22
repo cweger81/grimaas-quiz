@@ -1,53 +1,77 @@
 import { useState } from "react";
 import { login, createTeam, submitScore } from "../api";
 
+function getStorageKey(sessionId, suffix) {
+  return `quiz:${sessionId}:${suffix}`;
+}
+
 export default function QuizPage() {
   const [password, setPassword] = useState("");
   const [teamName, setTeamName] = useState("");
   const [participants, setParticipants] = useState("");
   const [team, setTeam] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
   const [message, setMessage] = useState("");
-
-  // 🧠 hent sendt runder
-  const [submittedRounds, setSubmittedRounds] = useState(() => {
-    const saved = localStorage.getItem("submittedRounds");
-    return saved ? JSON.parse(saved) : {};
+  const [roundInputs, setRoundInputs] = useState({
+    1: "",
+    2: "",
+    3: ""
   });
+  const [submittedRounds, setSubmittedRounds] = useState({});
 
   async function handleStart() {
-    const res = await login(password);
-
-    if (!res?.sessionId) {
-      setMessage("Feil passord");
-      return;
-    }
-
-    if (!teamName || !participants) {
+    if (!teamName.trim() || !participants) {
       setMessage("Fyll ut alle felt");
       return;
     }
 
-    if (participants < 1 || participants > 6) {
+    const participantCount = Number(participants);
+
+    if (participantCount < 1 || participantCount > 6) {
       setMessage("Maks 6 deltakere per lag");
       return;
     }
 
+    const session = await login(password);
+
+    if (!session?.sessionId) {
+      setMessage("Feil passord");
+      return;
+    }
+
     const teamRes = await createTeam(
-      teamName,
-      res.sessionId,
-      Number(participants)
+      teamName.trim(),
+      session.sessionId,
+      participantCount
     );
 
-    const teamId = teamRes.id || teamRes.Id;
+    const nextTeamId = teamRes.id || teamRes.Id;
+    const nextSubmittedRounds = {};
 
-    localStorage.setItem("teamId", teamId);
+    localStorage.setItem(
+      getStorageKey(session.sessionId, "teamId"),
+      String(nextTeamId)
+    );
+    localStorage.setItem(
+      getStorageKey(session.sessionId, "submittedRounds"),
+      JSON.stringify(nextSubmittedRounds)
+    );
 
+    setSessionId(session.sessionId);
+    setSubmittedRounds(nextSubmittedRounds);
+    setRoundInputs({ 1: "", 2: "", 3: "" });
     setTeam(teamRes);
     setMessage("");
   }
 
-  async function handleScore(round, points) {
-    const teamId = localStorage.getItem("teamId");
+  async function handleScore(round) {
+    if (!sessionId) {
+      setMessage("Ingen aktiv quiz funnet");
+      return;
+    }
+
+    const teamId = localStorage.getItem(getStorageKey(sessionId, "teamId"));
+    const points = Number(roundInputs[round]);
 
     if (!teamId) {
       setMessage("Ingen team funnet");
@@ -59,29 +83,36 @@ export default function QuizPage() {
       return;
     }
 
+    if (!Number.isFinite(points) || points < 0) {
+      setMessage("Skriv inn gyldige poeng");
+      return;
+    }
+
     await submitScore(Number(teamId), round, points);
 
-    const updated = {
+    const updatedRounds = {
       ...submittedRounds,
       [round]: true
     };
 
-    setSubmittedRounds(updated);
-    localStorage.setItem("submittedRounds", JSON.stringify(updated));
-
+    setSubmittedRounds(updatedRounds);
+    localStorage.setItem(
+      getStorageKey(sessionId, "submittedRounds"),
+      JSON.stringify(updatedRounds)
+    );
     setMessage(`Poeng sendt for runde ${round}`);
   }
 
-  // 🔐 LOGIN VIEW
   if (!team) {
     return (
       <div className="container">
-        <h1>🍺 Fjøset Quiz</h1>
+        <h1>Fjoset Quiz</h1>
 
         {message && <p>{message}</p>}
 
         <input
           placeholder="Lagnavn"
+          value={teamName}
           onChange={e => setTeamName(e.target.value)}
         />
 
@@ -90,11 +121,13 @@ export default function QuizPage() {
           placeholder="Antall deltakere (1-6)"
           min="1"
           max="6"
+          value={participants}
           onChange={e => setParticipants(e.target.value)}
         />
 
         <input
           placeholder="Passord"
+          value={password}
           onChange={e => setPassword(e.target.value)}
         />
 
@@ -103,26 +136,29 @@ export default function QuizPage() {
     );
   }
 
-  // 🧠 QUIZ VIEW
   return (
     <div className="container">
       <h2>{team.name || team.Name}</h2>
 
-      {[1, 2, 3].map(r => {
-        const isSubmitted = submittedRounds[r];
+      {[1, 2, 3].map(round => {
+        const isSubmitted = submittedRounds[round];
 
         return (
-          <div key={r} style={{ marginBottom: "20px" }}>
-            <h3>Runde {r}</h3>
+          <div key={round} style={{ marginBottom: "20px" }}>
+            <h3>Runde {round}</h3>
 
             <input
               type="number"
-              id={`r${r}`}
               placeholder="Poeng"
+              value={roundInputs[round]}
               disabled={isSubmitted}
-              style={{
-                opacity: isSubmitted ? 0.5 : 1
-              }}
+              style={{ opacity: isSubmitted ? 0.5 : 1 }}
+              onChange={e =>
+                setRoundInputs(current => ({
+                  ...current,
+                  [round]: e.target.value
+                }))
+              }
             />
 
             <button
@@ -131,12 +167,9 @@ export default function QuizPage() {
                 opacity: isSubmitted ? 0.5 : 1,
                 cursor: isSubmitted ? "not-allowed" : "pointer"
               }}
-              onClick={() => {
-                const val = document.getElementById(`r${r}`).value;
-                handleScore(r, Number(val));
-              }}
+              onClick={() => handleScore(round)}
             >
-              {isSubmitted ? "Sendt ✔" : "Send inn"}
+              {isSubmitted ? "Sendt" : "Send inn"}
             </button>
           </div>
         );

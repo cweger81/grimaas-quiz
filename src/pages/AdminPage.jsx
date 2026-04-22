@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  adminLogin,
   getPendingScores,
   approveScore,
   updateScore,
@@ -12,51 +13,67 @@ export default function AdminPage() {
   const [scores, setScores] = useState([]);
   const [activeSession, setActiveSession] = useState(null);
   const [newSessionPassword, setNewSessionPassword] = useState("");
-
   const [editId, setEditId] = useState(null);
   const [newPoints, setNewPoints] = useState("");
   const [loadingId, setLoadingId] = useState(null);
-
   const [isAdmin, setIsAdmin] = useState(
-    !!localStorage.getItem("adminPassword")
+    () => !!localStorage.getItem("adminPassword")
   );
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // 🔐 LOGIN
-  function handleLogin() {
-    if (password === "FJOSETADMIN123") {
-      localStorage.setItem("adminPassword", password);
-      setIsAdmin(true);
-      setError("");
-    } else {
+  async function load() {
+    const [pendingScores, session] = await Promise.all([
+      getPendingScores(),
+      getActiveSession()
+    ]);
+
+    setScores(pendingScores);
+    setActiveSession(session);
+  }
+
+  async function handleLogin() {
+    const result = await adminLogin(password);
+
+    if (!result.ok) {
       setError("Feil passord");
+      return;
     }
+
+    localStorage.setItem("adminPassword", password);
+    setIsAdmin(true);
+    setPassword("");
+    setError("");
   }
 
   function logout() {
     localStorage.removeItem("adminPassword");
     setIsAdmin(false);
+    setScores([]);
+    setActiveSession(null);
+    setEditId(null);
+    setNewPoints("");
   }
 
   function formatDate(date) {
     if (!date) return "";
-    const d = new Date(date);
-    return d.toLocaleDateString("no-NO", {
+
+    const value = new Date(date);
+    return value.toLocaleDateString("no-NO", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric"
     });
   }
 
-  // 🧠 grouping + deltakerinfo
-  function groupByTeam(scores) {
+  function groupByTeam(items) {
     const teams = {};
 
-    scores.forEach(s => {
-      const teamName = s.teamName;
-      const points = s.points ?? s.Points;
-      const participantCount = s.participantCount ?? s.ParticipantCount ?? 1;
+    items.forEach(item => {
+      const teamName = item.teamName;
+      const points = item.points ?? item.Points;
+      const participantCount =
+        item.participantCount ?? item.ParticipantCount ?? 1;
 
       if (!teams[teamName]) {
         teams[teamName] = {
@@ -69,7 +86,7 @@ export default function AdminPage() {
 
       teams[teamName].total += points;
       teams[teamName].rounds.push({
-        ...s,
+        ...item,
         points
       });
     });
@@ -77,80 +94,102 @@ export default function AdminPage() {
     return Object.values(teams).sort((a, b) => b.total - a.total);
   }
 
-  async function load() {
-    const data = await getPendingScores();
-    const session = await getActiveSession();
-
-    setScores(data);
-    setActiveSession(session);
-  }
-
   useEffect(() => {
-    if (isAdmin) {
-      load();
-      const i = setInterval(load, 5000);
-      return () => clearInterval(i);
+    if (!isAdmin) {
+      return undefined;
     }
+
+    const initialLoadId = setTimeout(() => {
+      void load();
+    }, 0);
+
+    const intervalId = setInterval(() => {
+      void load();
+    }, 5000);
+
+    return () => {
+      clearTimeout(initialLoadId);
+      clearInterval(intervalId);
+    };
   }, [isAdmin]);
 
   async function handleUpdate(id) {
     setLoadingId(id);
 
-    const res = await updateScore(id, Number(newPoints));
+    try {
+      const result = await updateScore(id, Number(newPoints));
 
-    if (res.status === 401) {
-      alert("Session utløpt – logg inn på nytt");
-      localStorage.removeItem("adminPassword");
-      setIsAdmin(false);
-      return;
+      if (result.status === 401) {
+        alert("Admin-innloggingen utlop. Logg inn pa nytt.");
+        logout();
+        return;
+      }
+
+      setEditId(null);
+      setNewPoints("");
+      await load();
+    } finally {
+      setLoadingId(null);
     }
-
-    setEditId(null);
-    setNewPoints("");
-    await load();
-    setLoadingId(null);
   }
 
   async function handleApprove(id) {
     setLoadingId(id);
 
-    const res = await approveScore(id);
+    try {
+      const result = await approveScore(id);
 
-    if (res.status === 401) {
-      alert("Session utløpt – logg inn på nytt");
-      localStorage.removeItem("adminPassword");
-      setIsAdmin(false);
-      return;
+      if (result.status === 401) {
+        alert("Admin-innloggingen utlop. Logg inn pa nytt.");
+        logout();
+        return;
+      }
+
+      await load();
+    } finally {
+      setLoadingId(null);
     }
-
-    await load();
-    setLoadingId(null);
   }
 
   async function handleCreateSession() {
-    if (!newSessionPassword) {
+    if (!newSessionPassword.trim()) {
       alert("Skriv passord");
       return;
     }
 
-    await createSession(newSessionPassword);
+    const result = await createSession(newSessionPassword.trim());
+
+    if (result.status === 401) {
+      alert("Admin-innloggingen utlop. Logg inn pa nytt.");
+      logout();
+      return;
+    }
+
     setNewSessionPassword("");
     await load();
   }
 
   async function handleCloseSession() {
-    await closeSession();
+    const result = await closeSession();
+
+    if (result?.status === 401) {
+      alert("Admin-innloggingen utlop. Logg inn pa nytt.");
+      logout();
+      return;
+    }
+
     await load();
   }
 
-  // 🔐 LOGIN VIEW
   if (!isAdmin) {
     return (
       <div className="container">
         <h1>Admin login</h1>
 
         <input
+          type="password"
           placeholder="Passord"
+          value={password}
           onChange={e => setPassword(e.target.value)}
         />
 
@@ -161,30 +200,24 @@ export default function AdminPage() {
     );
   }
 
-  // 🧑‍💼 ADMIN VIEW
   return (
     <div className="container">
-      <h1>🧑‍💼 Admin</h1>
+      <h1>Admin</h1>
 
       <button onClick={logout}>Logg ut</button>
 
-      {/* 🟢 AKTIV QUIZ */}
       <h2>Aktiv quiz</h2>
 
       {activeSession ? (
         <>
-          <p>Dato: {formatDate(activeSession.CreatedAt)}</p>
+          <p>Dato: {formatDate(activeSession.QuizDate)}</p>
           <p>Passord: {activeSession.Password}</p>
-
-          <button onClick={handleCloseSession}>
-            🔴 Lukk quiz
-          </button>
+          <button onClick={handleCloseSession}>Lukk quiz</button>
         </>
       ) : (
         <p>Ingen aktiv quiz</p>
       )}
 
-      {/* 🟢 NY QUIZ */}
       <h2>Start ny quiz</h2>
 
       <input
@@ -193,13 +226,10 @@ export default function AdminPage() {
         onChange={e => setNewSessionPassword(e.target.value)}
       />
 
-      <button onClick={handleCreateSession}>
-        🚀 Start ny quiz
-      </button>
+      <button onClick={handleCreateSession}>Start ny quiz</button>
 
       <hr />
 
-      {/* 🟢 SCORES */}
       {scores.length === 0 && <p>Ingen pending scores</p>}
 
       {groupByTeam(scores).map(team => (
@@ -214,19 +244,15 @@ export default function AdminPage() {
           }}
         >
           <h2>{team.teamName}</h2>
-
           <p>{team.participantCount} deltakere</p>
           <h3>Totalt: {team.total} poeng</h3>
-          <p>
-            Snitt:{" "}
-            {(team.total / team.participantCount).toFixed(1)}
-          </p>
+          <p>Snitt: {(team.total / team.participantCount).toFixed(1)}</p>
 
-          {team.rounds.map(s => (
-            <div key={s.id || s.Id} style={{ marginTop: "10px" }}>
-              <p>Runde {s.round || s.Round}</p>
+          {team.rounds.map(score => (
+            <div key={score.id || score.Id} style={{ marginTop: "10px" }}>
+              <p>Runde {score.round || score.Round}</p>
 
-              {editId === (s.id || s.Id) ? (
+              {editId === (score.id || score.Id) ? (
                 <>
                   <input
                     type="number"
@@ -235,36 +261,34 @@ export default function AdminPage() {
                   />
 
                   <button
-                    onClick={() => handleUpdate(s.id || s.Id)}
-                    disabled={loadingId === (s.id || s.Id)}
+                    onClick={() => handleUpdate(score.id || score.Id)}
+                    disabled={loadingId === (score.id || score.Id)}
                   >
-                    {loadingId === (s.id || s.Id) ? "..." : "Lagre"}
+                    {loadingId === (score.id || score.Id) ? "..." : "Lagre"}
                   </button>
                 </>
               ) : (
                 <>
                   <p>
-                    <strong>{s.points} poeng</strong>
+                    <strong>{score.points} poeng</strong>
                   </p>
 
                   <button
                     onClick={() => {
-                      setEditId(s.id || s.Id);
-                      setNewPoints(s.points);
+                      setEditId(score.id || score.Id);
+                      setNewPoints(String(score.points));
                     }}
                   >
-                    ✏️ Endre
+                    Endre
                   </button>
                 </>
               )}
 
               <button
-                onClick={() => handleApprove(s.id || s.Id)}
-                disabled={loadingId === (s.id || s.Id)}
+                onClick={() => handleApprove(score.id || score.Id)}
+                disabled={loadingId === (score.id || score.Id)}
               >
-                {loadingId === (s.id || s.Id)
-                  ? "..."
-                  : "✔️ Godkjenn"}
+                {loadingId === (score.id || score.Id) ? "..." : "Godkjenn"}
               </button>
             </div>
           ))}
