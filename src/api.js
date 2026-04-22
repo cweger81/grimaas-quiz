@@ -58,7 +58,9 @@ export async function submitScore(teamId, round, points) {
 }
 
 export async function getPendingScores() {
-  const res = await fetch(`${API_URL}/scores?status=Pending`);
+  const res = await fetch(`${API_URL}/scores?status=Pending`, {
+    cache: "no-store"
+  });
   return res.json();
 }
 
@@ -98,12 +100,16 @@ export async function updateScore(id, points) {
 }
 
 export async function getLeaderboard() {
-  const res = await fetch(`${API_URL}/leaderboard`);
+  const res = await fetch(`${API_URL}/leaderboard`, {
+    cache: "no-store"
+  });
   return res.json();
 }
 
 export async function getActiveSession() {
-  const res = await fetch(`${API_URL}/getActiveSession`);
+  const res = await fetch(`${API_URL}/getActiveSession`, {
+    cache: "no-store"
+  });
   return res.json();
 }
 

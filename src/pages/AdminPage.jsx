@@ -178,6 +178,7 @@ export default function AdminPage() {
       return;
     }
 
+    setActiveSession(null);
     await load();
   }
 
