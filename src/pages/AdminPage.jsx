@@ -1,8 +1,18 @@
 import { useEffect, useState } from "react";
-import { getPendingScores, approveScore, updateScore } from "../api";
+import {
+  getPendingScores,
+  approveScore,
+  updateScore,
+  createSession,
+  getActiveSession,
+  closeSession
+} from "../api";
 
 export default function AdminPage() {
   const [scores, setScores] = useState([]);
+  const [activeSession, setActiveSession] = useState(null);
+  const [newSessionPassword, setNewSessionPassword] = useState("");
+
   const [editId, setEditId] = useState(null);
   const [newPoints, setNewPoints] = useState("");
   const [loadingId, setLoadingId] = useState(null);
@@ -27,6 +37,16 @@ export default function AdminPage() {
   function logout() {
     localStorage.removeItem("adminPassword");
     setIsAdmin(false);
+  }
+
+  function formatDate(date) {
+    if (!date) return "";
+    const d = new Date(date);
+    return d.toLocaleDateString("no-NO", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
   }
 
   // 🧠 grouping + deltakerinfo
@@ -59,7 +79,10 @@ export default function AdminPage() {
 
   async function load() {
     const data = await getPendingScores();
+    const session = await getActiveSession();
+
     setScores(data);
+    setActiveSession(session);
   }
 
   useEffect(() => {
@@ -104,6 +127,22 @@ export default function AdminPage() {
     setLoadingId(null);
   }
 
+  async function handleCreateSession() {
+    if (!newSessionPassword) {
+      alert("Skriv passord");
+      return;
+    }
+
+    await createSession(newSessionPassword);
+    setNewSessionPassword("");
+    await load();
+  }
+
+  async function handleCloseSession() {
+    await closeSession();
+    await load();
+  }
+
   // 🔐 LOGIN VIEW
   if (!isAdmin) {
     return (
@@ -129,6 +168,38 @@ export default function AdminPage() {
 
       <button onClick={logout}>Logg ut</button>
 
+      {/* 🟢 AKTIV QUIZ */}
+      <h2>Aktiv quiz</h2>
+
+      {activeSession ? (
+        <>
+          <p>Dato: {formatDate(activeSession.CreatedAt)}</p>
+          <p>Passord: {activeSession.Password}</p>
+
+          <button onClick={handleCloseSession}>
+            🔴 Lukk quiz
+          </button>
+        </>
+      ) : (
+        <p>Ingen aktiv quiz</p>
+      )}
+
+      {/* 🟢 NY QUIZ */}
+      <h2>Start ny quiz</h2>
+
+      <input
+        placeholder="Nytt passord"
+        value={newSessionPassword}
+        onChange={e => setNewSessionPassword(e.target.value)}
+      />
+
+      <button onClick={handleCreateSession}>
+        🚀 Start ny quiz
+      </button>
+
+      <hr />
+
+      {/* 🟢 SCORES */}
       {scores.length === 0 && <p>Ingen pending scores</p>}
 
       {groupByTeam(scores).map(team => (
@@ -139,12 +210,11 @@ export default function AdminPage() {
             padding: "15px",
             marginBottom: "15px",
             borderRadius: "8px",
-            width: "320px"
+            width: "100%"
           }}
         >
           <h2>{team.teamName}</h2>
 
-          {/* NYTT 👇 */}
           <p>{team.participantCount} deltakere</p>
           <h3>Totalt: {team.total} poeng</h3>
           <p>
