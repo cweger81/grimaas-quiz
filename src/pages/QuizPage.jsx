@@ -307,7 +307,7 @@ export default function QuizPage() {
           {message && <p className="quiz-message">{message}</p>}
 
           <button className="quiz-secondary-button" onClick={handleResetDevice}>
-            Bytt lag pa denne enheten
+            Bytt lag på denne enheten
           </button>
         </div>
       </div>
