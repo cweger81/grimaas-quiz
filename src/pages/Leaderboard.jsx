@@ -54,7 +54,7 @@ export default function Leaderboard() {
     <div className="container leaderboard-page">
       <div className="leaderboard-shell">
         <p className="quiz-eyebrow">Poengtavle</p>
-        <h1>Leaderboard</h1>
+
 
         {Object.entries(grouped).map(([date, teams]) => (
           <section key={date} className="leaderboard-section">
