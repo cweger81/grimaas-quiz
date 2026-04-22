@@ -216,7 +216,7 @@ export default function QuizPage() {
             <p className="quiz-eyebrow">Grimaas Bryggeri</p>
             <h1>Fjøset Quiz</h1>
             <p className="quiz-intro">
-              Logg inn laget ditt og send inn poeng fortløpende gjennom kvelden.
+              Logg inn laget ditt og send inn poeng etter hver runde. Passordet står på quizen.
             </p>
 
             {message && <p className="quiz-message">{message}</p>}
