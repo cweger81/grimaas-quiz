@@ -122,7 +122,9 @@ input {
 }
 
 .quiz-page {
+  justify-content: flex-start;
   min-height: 100vh;
+  height: auto;
   padding: 32px 16px;
   box-sizing: border-box;
 }
@@ -287,15 +289,59 @@ input {
   background: rgba(140, 207, 132, 0.08);
 }
 
+.quiz-round-kicker {
+  margin: 0 0 10px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 .quiz-round-card input,
 .quiz-round-card button {
   width: 100%;
 }
 
 .quiz-round-label {
-  margin: 0 0 8px;
-  font-size: 18px;
+  margin: 0 0 12px;
+  font-size: 24px;
   font-weight: 700;
+}
+
+.admin-team-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-team-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-team-card span {
+  color: var(--muted);
+}
+
+.admin-round-pill {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 10px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(224, 180, 75, 0.15);
+  border: 1px solid rgba(224, 180, 75, 0.28);
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 @media (min-width: 700px) {
@@ -317,6 +363,15 @@ input {
 
   .quiz-page {
     padding: 20px 12px;
+  }
+
+  .quiz-round-label {
+    font-size: 20px;
+  }
+
+  .admin-team-card {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .leaderboard-page {

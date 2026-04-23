@@ -47,6 +47,14 @@ export async function createTeam(name, sessionId, participantCount) {
   return res.json();
 }
 
+export async function getTeams(sessionId) {
+  const res = await fetch(`${API_URL}/team?sessionId=${sessionId}`, {
+    cache: "no-store"
+  });
+
+  return res.json();
+}
+
 export async function submitScore(teamId, round, points) {
   const res = await fetch(`${API_URL}/score`, {
     method: "POST",

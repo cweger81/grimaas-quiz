@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   adminLogin,
   getPendingScores,
+  getTeams,
   approveScore,
   updateScore,
   createSession,
@@ -11,6 +12,7 @@ import {
 
 export default function AdminPage() {
   const [scores, setScores] = useState([]);
+  const [registeredTeams, setRegisteredTeams] = useState([]);
   const [activeSession, setActiveSession] = useState(null);
   const [newSessionPassword, setNewSessionPassword] = useState("");
   const [editId, setEditId] = useState(null);
@@ -34,13 +36,15 @@ export default function AdminPage() {
   }
 
   async function load() {
-    const [pendingScores, session] = await Promise.all([
+    const session = await getActiveSession();
+    const [pendingScores, teams] = await Promise.all([
       getPendingScores(),
-      getActiveSession()
+      session?.Id ? getTeams(session.Id) : Promise.resolve([])
     ]);
 
     setScores(pendingScores);
     setActiveSession(session);
+    setRegisteredTeams(teams);
   }
 
   async function handleLogin() {
@@ -61,6 +65,7 @@ export default function AdminPage() {
     localStorage.removeItem("adminPassword");
     setIsAdmin(false);
     setScores([]);
+    setRegisteredTeams([]);
     setActiveSession(null);
     setEditId(null);
     setNewPoints("");
@@ -249,6 +254,23 @@ export default function AdminPage() {
 
       <hr />
 
+      <h2>Registrerte lag</h2>
+
+      {registeredTeams.length === 0 ? (
+        <p>Ingen lag registrert ennå</p>
+      ) : (
+        <div className="admin-team-list">
+          {registeredTeams.map(team => (
+            <div key={team.Id || team.id} className="admin-team-card">
+              <strong>{team.Name || team.name}</strong>
+              <span>{team.ParticipantCount || team.participantCount} deltakere</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <hr />
+
       {scores.length === 0 && <p>Ingen pending scores</p>}
 
       {groupByTeam(scores).map(team => (
@@ -269,7 +291,7 @@ export default function AdminPage() {
 
           {team.rounds.map(score => (
             <div key={score.id || score.Id} style={{ marginTop: "10px" }}>
-              <p>Runde {score.round || score.Round}</p>
+              <p className="admin-round-pill">Runde {score.round || score.Round}</p>
 
               {editId === (score.id || score.Id) ? (
                 <>

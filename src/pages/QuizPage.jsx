@@ -303,6 +303,7 @@ export default function QuizPage() {
                   key={round}
                   className={`quiz-round-card${isSubmitted ? " is-submitted" : ""}`}
                 >
+                  <p className="quiz-round-kicker">Poengregistrering</p>
                   <p className="quiz-round-label">Runde {round}</p>
 
                   <input
