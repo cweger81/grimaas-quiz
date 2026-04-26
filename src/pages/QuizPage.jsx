@@ -77,18 +77,33 @@ export default function QuizPage() {
   useEffect(() => {
     let isMounted = true;
 
-    async function restoreExistingTeam() {
-      const [activeSession, upcoming] = await Promise.all([
-        getActiveSession(),
-        getUpcomingDates()
-      ]);
-      const storedSessionId = localStorage.getItem(ACTIVE_SESSION_KEY);
+    async function loadUpcomingDates() {
+      const upcoming = await getUpcomingDates();
 
       if (!isMounted) {
         return;
       }
 
       setUpcomingDates(upcoming);
+    }
+
+    void loadUpcomingDates();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function restoreExistingTeam() {
+      const activeSession = await getActiveSession();
+      const storedSessionId = localStorage.getItem(ACTIVE_SESSION_KEY);
+
+      if (!isMounted) {
+        return;
+      }
 
       if (!activeSession?.Id) {
         clearStoredQuizState(storedSessionId);
@@ -283,7 +298,7 @@ export default function QuizPage() {
           <div className="quiz-card">
             <img className="brand-logo" src="/grimaas-logo.png" alt="Grimaas logo" />
             <p className="quiz-eyebrow">Grimaas Bryggeri</p>
-            <h1>Fjoset Quiz</h1>
+            <h1>Fjøset Quiz</h1>
             <p className="quiz-intro">
               Registrer laget ditt og send inn poeng etter hver runde. Passordet star pa quiz-arket.
             </p>

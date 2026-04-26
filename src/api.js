@@ -13,6 +13,18 @@ async function readJson(res) {
   return null;
 }
 
+function normalizeList(data) {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (data && Array.isArray(data.value)) {
+    return data.value;
+  }
+
+  return [];
+}
+
 export async function login(password) {
   const res = await fetch(`${API_URL}/login`, {
     method: "POST",
@@ -52,7 +64,7 @@ export async function getTeams(sessionId) {
     cache: "no-store"
   });
 
-  return res.json();
+  return normalizeList(await res.json());
 }
 
 export async function submitScore(teamId, round, points) {
@@ -69,7 +81,7 @@ export async function getPendingScores() {
   const res = await fetch(`${API_URL}/scores?status=Pending`, {
     cache: "no-store"
   });
-  return res.json();
+  return normalizeList(await res.json());
 }
 
 export async function getUpcomingDates() {
@@ -77,7 +89,7 @@ export async function getUpcomingDates() {
     cache: "no-store"
   });
 
-  return res.json();
+  return normalizeList(await res.json());
 }
 
 export async function addUpcomingDate(quizDate) {
@@ -153,7 +165,7 @@ export async function getLeaderboard() {
   const res = await fetch(`${API_URL}/leaderboard`, {
     cache: "no-store"
   });
-  return res.json();
+  return normalizeList(await res.json());
 }
 
 export async function getActiveSession() {

@@ -61,12 +61,12 @@ export default function AdminPage() {
   }
 
   async function load() {
-    const [session, pendingScores, upcoming] = await Promise.all([
+    const [session, pendingScores] = await Promise.all([
       getActiveSession(),
-      getPendingScores(),
-      getUpcomingDates()
+      getPendingScores()
     ]);
 
+    const upcoming = await getUpcomingDates();
     const teams = session?.Id ? await getTeams(session.Id) : [];
 
     setScores(pendingScores);
