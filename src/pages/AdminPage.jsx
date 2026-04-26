@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import {
+  addUpcomingDate,
   adminLogin,
+  approveScore,
+  closeSession,
+  createSession,
+  deleteUpcomingDate,
+  getActiveSession,
   getPendingScores,
   getTeams,
-  approveScore,
-  updateScore,
-  createSession,
-  getActiveSession,
-  closeSession
+  getUpcomingDates,
+  updateScore
 } from "../api";
 
 export default function AdminPage() {
@@ -23,6 +26,8 @@ export default function AdminPage() {
   );
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [upcomingDates, setUpcomingDates] = useState([]);
+  const [newUpcomingDate, setNewUpcomingDate] = useState("");
 
   function parsePoints(value) {
     const normalized = String(value).replace(",", ".").trim();
@@ -35,16 +40,39 @@ export default function AdminPage() {
     return points;
   }
 
+  function formatDate(date) {
+    if (!date) return "";
+
+    const value = new Date(date);
+    return value.toLocaleDateString("no-NO", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+  }
+
+  function formatUpcomingDate(date) {
+    return new Date(date).toLocaleDateString("no-NO", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    });
+  }
+
   async function load() {
-    const session = await getActiveSession();
-    const [pendingScores, teams] = await Promise.all([
+    const [session, pendingScores, upcoming] = await Promise.all([
+      getActiveSession(),
       getPendingScores(),
-      session?.Id ? getTeams(session.Id) : Promise.resolve([])
+      getUpcomingDates()
     ]);
+
+    const teams = session?.Id ? await getTeams(session.Id) : [];
 
     setScores(pendingScores);
     setActiveSession(session);
     setRegisteredTeams(teams);
+    setUpcomingDates(upcoming);
   }
 
   async function handleLogin() {
@@ -69,17 +97,8 @@ export default function AdminPage() {
     setActiveSession(null);
     setEditId(null);
     setNewPoints("");
-  }
-
-  function formatDate(date) {
-    if (!date) return "";
-
-    const value = new Date(date);
-    return value.toLocaleDateString("no-NO", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric"
-    });
+    setUpcomingDates([]);
+    setNewUpcomingDate("");
   }
 
   function groupByTeam(items) {
@@ -205,27 +224,66 @@ export default function AdminPage() {
     await load();
   }
 
+  async function handleAddUpcomingDate() {
+    if (!newUpcomingDate) {
+      alert("Velg dato");
+      return;
+    }
+
+    const result = await addUpcomingDate(newUpcomingDate);
+
+    if (result.status === 401) {
+      alert("Admin-innloggingen utlop. Logg inn pa nytt.");
+      logout();
+      return;
+    }
+
+    if (!result.ok) {
+      alert("Kunne ikke lagre dato");
+      return;
+    }
+
+    setNewUpcomingDate("");
+    await load();
+  }
+
+  async function handleDeleteUpcomingDate(id) {
+    const result = await deleteUpcomingDate(id);
+
+    if (result.status === 401) {
+      alert("Admin-innloggingen utlop. Logg inn pa nytt.");
+      logout();
+      return;
+    }
+
+    await load();
+  }
+
   if (!isAdmin) {
     return (
       <div className="container">
-        <h1>Admin login</h1>
+        <div className="admin-login-card">
+          <img className="brand-logo" src="/grimaas-logo.png" alt="Grimaas logo" />
+          <h1>Admin login</h1>
 
-        <input
-          type="password"
-          placeholder="Passord"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-        />
+          <input
+            type="password"
+            placeholder="Passord"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+          />
 
-        <button onClick={handleLogin}>Logg inn</button>
+          <button onClick={handleLogin}>Logg inn</button>
 
-        {error && <p>{error}</p>}
+          {error && <p>{error}</p>}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="container admin-page">
+      <img className="brand-logo brand-logo-admin" src="/grimaas-logo.png" alt="Grimaas logo" />
       <h1>Admin</h1>
 
       <button onClick={logout}>Logg ut</button>
@@ -251,6 +309,34 @@ export default function AdminPage() {
       />
 
       <button onClick={handleCreateSession}>Start ny quiz</button>
+
+      <hr />
+
+      <h2>Kommende quizdatoer</h2>
+
+      <div className="admin-upcoming-form">
+        <input
+          type="date"
+          value={newUpcomingDate}
+          onChange={e => setNewUpcomingDate(e.target.value)}
+        />
+        <button onClick={handleAddUpcomingDate}>Legg til dato</button>
+      </div>
+
+      {upcomingDates.length === 0 ? (
+        <p>Ingen kommende datoer lagret</p>
+      ) : (
+        <div className="admin-upcoming-list">
+          {upcomingDates.map(item => (
+            <div key={item.Id || item.id} className="admin-upcoming-card">
+              <span>{formatUpcomingDate(item.QuizDate || item.quizDate)}</span>
+              <button onClick={() => handleDeleteUpcomingDate(item.Id || item.id)}>
+                Slett
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       <hr />
 

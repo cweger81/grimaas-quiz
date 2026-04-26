@@ -72,6 +72,48 @@ export async function getPendingScores() {
   return res.json();
 }
 
+export async function getUpcomingDates() {
+  const res = await fetch(`${API_URL}/upcomingDates`, {
+    cache: "no-store"
+  });
+
+  return res.json();
+}
+
+export async function addUpcomingDate(quizDate) {
+  const res = await fetch(`${API_URL}/addUpcomingDate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      quizDate,
+      adminPassword: localStorage.getItem("adminPassword")
+    })
+  });
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
+}
+
+export async function deleteUpcomingDate(id) {
+  const res = await fetch(`${API_URL}/deleteUpcomingDate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id,
+      adminPassword: localStorage.getItem("adminPassword")
+    })
+  });
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
+}
+
 export async function approveScore(id) {
   const res = await fetch(`${API_URL}/approve`, {
     method: "POST",

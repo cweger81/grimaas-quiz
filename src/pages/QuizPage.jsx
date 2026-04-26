@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { createTeam, getActiveSession, login, submitScore } from "../api";
+import {
+  createTeam,
+  getActiveSession,
+  getUpcomingDates,
+  login,
+  submitScore
+} from "../api";
 
 function getStorageKey(sessionId, suffix) {
   return `quiz:${sessionId}:${suffix}`;
@@ -58,17 +64,31 @@ export default function QuizPage() {
     3: ""
   });
   const [submittedRounds, setSubmittedRounds] = useState({});
+  const [upcomingDates, setUpcomingDates] = useState([]);
+
+  function formatDate(date) {
+    return new Date(date).toLocaleDateString("no-NO", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long"
+    });
+  }
 
   useEffect(() => {
     let isMounted = true;
 
     async function restoreExistingTeam() {
-      const activeSession = await getActiveSession();
+      const [activeSession, upcoming] = await Promise.all([
+        getActiveSession(),
+        getUpcomingDates()
+      ]);
       const storedSessionId = localStorage.getItem(ACTIVE_SESSION_KEY);
 
       if (!isMounted) {
         return;
       }
+
+      setUpcomingDates(upcoming);
 
       if (!activeSession?.Id) {
         clearStoredQuizState(storedSessionId);
@@ -232,15 +252,40 @@ export default function QuizPage() {
     );
   }
 
+  function renderUpcomingDates() {
+    if (upcomingDates.length === 0) {
+      return (
+        <div className="quiz-upcoming-card">
+          <p className="quiz-eyebrow">Neste quizkvelder</p>
+          <p className="quiz-upcoming-empty">Nye datoer kommer snart.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="quiz-upcoming-card">
+        <p className="quiz-eyebrow">Neste quizkvelder</p>
+        <div className="quiz-upcoming-list">
+          {upcomingDates.map(item => (
+            <div key={item.Id || item.id} className="quiz-upcoming-item">
+              {formatDate(item.QuizDate || item.quizDate)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (!team) {
     return (
       <div className="container quiz-page">
         <div className="quiz-shell">
           <div className="quiz-card">
+            <img className="brand-logo" src="/grimaas-logo.png" alt="Grimaas logo" />
             <p className="quiz-eyebrow">Grimaas Bryggeri</p>
-            <h1>Fjøset Quiz</h1>
+            <h1>Fjoset Quiz</h1>
             <p className="quiz-intro">
-              Registrer laget ditt og send inn poeng etter hver runde. Passordet står på quiz-arket.
+              Registrer laget ditt og send inn poeng etter hver runde. Passordet star pa quiz-arket.
             </p>
 
             {message && <p className="quiz-message">{message}</p>}
@@ -275,6 +320,8 @@ export default function QuizPage() {
 
               {renderLeaderboardLink()}
             </div>
+
+            {renderUpcomingDates()}
           </div>
         </div>
       </div>
@@ -285,6 +332,7 @@ export default function QuizPage() {
     <div className="container quiz-page">
       <div className="quiz-shell">
         <div className="quiz-card quiz-card-wide">
+          <img className="brand-logo" src="/grimaas-logo.png" alt="Grimaas logo" />
           <div className="quiz-header">
             <div>
               <p className="quiz-eyebrow">Lag registrert</p>
@@ -337,6 +385,8 @@ export default function QuizPage() {
           {message && <p className="quiz-message">{message}</p>}
 
           {renderLeaderboardLink()}
+
+          {renderUpcomingDates()}
 
           <button className="quiz-secondary-button" onClick={handleResetDevice}>
             Bytt lag pa denne enheten

@@ -176,6 +176,18 @@ input {
   padding-bottom: 24px;
 }
 
+.brand-logo {
+  display: block;
+  width: 72px;
+  height: auto;
+  margin: 0 auto 14px;
+  opacity: 0.95;
+}
+
+.brand-logo-admin {
+  margin-bottom: 8px;
+}
+
 .quiz-eyebrow {
   margin: 0 0 6px;
   font-size: 12px;
@@ -255,6 +267,32 @@ input {
   color: var(--text);
 }
 
+.quiz-upcoming-card {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.quiz-upcoming-list {
+  display: grid;
+  gap: 10px;
+}
+
+.quiz-upcoming-item {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(224, 180, 75, 0.1);
+  border: 1px solid rgba(224, 180, 75, 0.18);
+  font-weight: 700;
+}
+
+.quiz-upcoming-empty {
+  margin: 0;
+  color: var(--muted);
+}
+
 .quiz-header {
   display: flex;
   align-items: center;
@@ -314,6 +352,17 @@ input {
   gap: 12px;
 }
 
+.admin-login-card {
+  width: min(420px, 100%);
+  padding: 28px;
+  border-radius: 28px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--shadow);
+  box-sizing: border-box;
+  text-align: center;
+}
+
 .admin-team-card {
   display: flex;
   align-items: center;
@@ -344,6 +393,33 @@ input {
   text-transform: uppercase;
 }
 
+.admin-upcoming-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.admin-upcoming-form input {
+  width: 220px;
+}
+
+.admin-upcoming-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-upcoming-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 @media (min-width: 700px) {
   .quiz-round-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -370,6 +446,11 @@ input {
   }
 
   .admin-team-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-upcoming-card {
     align-items: flex-start;
     flex-direction: column;
   }
