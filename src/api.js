@@ -73,7 +73,7 @@ export async function getPendingScores() {
 }
 
 export async function getUpcomingDates() {
-  const res = await fetch(`${API_URL}/upcomingDates`, {
+  const res = await fetch(`${API_URL}/upcomingdates`, {
     cache: "no-store"
   });
 
@@ -81,7 +81,7 @@ export async function getUpcomingDates() {
 }
 
 export async function addUpcomingDate(quizDate) {
-  const res = await fetch(`${API_URL}/addUpcomingDate`, {
+  const res = await fetch(`${API_URL}/addupcomingdate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -98,7 +98,7 @@ export async function addUpcomingDate(quizDate) {
 }
 
 export async function deleteUpcomingDate(id) {
-  const res = await fetch(`${API_URL}/deleteUpcomingDate`, {
+  const res = await fetch(`${API_URL}/deleteupcomingdate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
