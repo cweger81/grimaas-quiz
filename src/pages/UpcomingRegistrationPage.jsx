@@ -26,7 +26,7 @@ export default function UpcomingRegistrationPage() {
   const initialDate = searchParams.get("date") || "";
   const [teamName, setTeamName] = useState("");
   const [participantCount, setParticipantCount] = useState("");
-  const [quizDate, setQuizDate] = useState(initialDate);
+  const quizDate = initialDate;
   const [contactPerson, setContactPerson] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [message, setMessage] = useState("");
@@ -102,7 +102,7 @@ export default function UpcomingRegistrationPage() {
                 <input
                   type="date"
                   value={quizDate}
-                  onChange={event => setQuizDate(event.target.value)}
+                  readonly
                 />
 
                 <input
