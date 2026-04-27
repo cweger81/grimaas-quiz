@@ -74,6 +74,10 @@ export default function QuizPage() {
     });
   }
 
+  function isQuizFull(item) {
+    return Number(item?.QuizFull ?? item?.quizFull ?? 0) === 1;
+  }
+
   useEffect(() => {
     let isMounted = true;
 
@@ -281,19 +285,39 @@ export default function QuizPage() {
       <div className="quiz-upcoming-card">
         <p className="quiz-eyebrow">Neste quizkvelder</p>
         <div className="quiz-upcoming-list">
-          {upcomingDates.map(item => (
-            <a
-              key={item.Id || item.id}
-              className="quiz-upcoming-item quiz-upcoming-link"
-              href={`/quiz-registration?date=${encodeURIComponent(
-                (item.QuizDate || item.quizDate || "").slice(0, 10)
-              )}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {formatDate(item.QuizDate || item.quizDate)}
-            </a>
-          ))}
+          {upcomingDates.map(item => {
+            const dateValue = (item.QuizDate || item.quizDate || "").slice(0, 10);
+            const full = isQuizFull(item);
+            const content = (
+              <>
+                <span>{formatDate(item.QuizDate || item.quizDate)}</span>
+                {full ? <span className="quiz-upcoming-status">Fullt!</span> : null}
+              </>
+            );
+
+            if (full) {
+              return (
+                <div
+                  key={item.Id || item.id}
+                  className="quiz-upcoming-item quiz-upcoming-item-full"
+                >
+                  {content}
+                </div>
+              );
+            }
+
+            return (
+              <a
+                key={item.Id || item.id}
+                className="quiz-upcoming-item quiz-upcoming-link"
+                href={`/quiz-registration?date=${encodeURIComponent(dateValue)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {content}
+              </a>
+            );
+          })}
         </div>
       </div>
     );

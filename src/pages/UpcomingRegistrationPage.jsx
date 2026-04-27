@@ -49,7 +49,7 @@ export default function UpcomingRegistrationPage() {
     const count = Number(participantCount);
 
     if (!Number.isInteger(count) || count < 1 || count > 20) {
-      setMessage("Antall deltakere må være mellom 1 og 20.");
+      setMessage("Antall deltagere ma vaere mellom 1 og 20.");
       return;
     }
 
@@ -62,12 +62,12 @@ export default function UpcomingRegistrationPage() {
     });
 
     if (!result.ok) {
-      setMessage("Kunne ikke registrere laget akkurat nå.");
+      setMessage(result.data?.message || "Kunne ikke registrere laget akkurat na.");
       return;
     }
 
     setIsSubmitted(true);
-    setMessage("Påmeldingen er registrert. Vi sees på quiz!");
+    setMessage("Pameldingen er registrert. Vi sees pa quiz.");
   }
 
   return (
@@ -75,19 +75,19 @@ export default function UpcomingRegistrationPage() {
       <div className="quiz-shell">
         <div className="quiz-card">
           <img className="brand-logo" src="/grimaas-logo.png" alt="Grimaas logo" />
-          <p className="quiz-eyebrow">Påmelding neste quiz</p>
+          <p className="quiz-eyebrow">Neste quiz</p>
           <h1>Registrer lag</h1>
-          {formattedDate && <p className="quiz-intro">{formattedDate}</p>}
+          {formattedDate ? <p className="quiz-intro">{formattedDate}</p> : null}
 
-          {message && <p className="quiz-message">{message}</p>}
+          {message ? <p className="quiz-message">{message}</p> : null}
 
-          {!isSubmitted && (
+          {!isSubmitted ? (
             <>
               <div className="quiz-form">
                 <input
                   placeholder="Lagnavn"
                   value={teamName}
-                  onChange={e => setTeamName(e.target.value)}
+                  onChange={event => setTeamName(event.target.value)}
                 />
 
                 <input
@@ -96,33 +96,33 @@ export default function UpcomingRegistrationPage() {
                   min="1"
                   max="20"
                   value={participantCount}
-                  onChange={e => setParticipantCount(e.target.value)}
+                  onChange={event => setParticipantCount(event.target.value)}
                 />
 
                 <input
                   type="date"
                   value={quizDate}
-                  onChange={e => setQuizDate(e.target.value)}
+                  onChange={event => setQuizDate(event.target.value)}
                 />
 
                 <input
                   placeholder="Kontaktperson"
                   value={contactPerson}
-                  onChange={e => setContactPerson(e.target.value)}
+                  onChange={event => setContactPerson(event.target.value)}
                 />
 
                 <input
                   placeholder="Telefonnummer"
                   value={phoneNumber}
-                  onChange={e => setPhoneNumber(e.target.value)}
+                  onChange={event => setPhoneNumber(event.target.value)}
                 />
               </div>
 
               <button className="quiz-primary-button" onClick={handleSubmit}>
-                Send påmelding
+                Send pamelding
               </button>
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

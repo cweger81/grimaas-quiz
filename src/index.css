@@ -281,11 +281,20 @@ input {
 }
 
 .quiz-upcoming-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 10px 12px;
   border-radius: 14px;
   background: rgba(224, 180, 75, 0.1);
   border: 1px solid rgba(224, 180, 75, 0.18);
   font-weight: 700;
+}
+
+.quiz-upcoming-item-full {
+  opacity: 0.9;
+  cursor: default;
 }
 
 .quiz-upcoming-link {
@@ -297,6 +306,18 @@ input {
 .quiz-upcoming-link:hover {
   background: rgba(224, 180, 75, 0.16);
   transform: translateY(-1px);
+}
+
+.quiz-upcoming-status {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .quiz-upcoming-empty {
