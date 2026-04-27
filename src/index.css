@@ -288,6 +288,17 @@ input {
   font-weight: 700;
 }
 
+.quiz-upcoming-link {
+  color: var(--text);
+  text-decoration: none;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.quiz-upcoming-link:hover {
+  background: rgba(224, 180, 75, 0.16);
+  transform: translateY(-1px);
+}
+
 .quiz-upcoming-empty {
   margin: 0;
   color: var(--muted);
@@ -409,6 +420,11 @@ input {
   gap: 12px;
 }
 
+.admin-upcoming-stack {
+  display: grid;
+  gap: 10px;
+}
+
 .admin-upcoming-card {
   display: flex;
   justify-content: space-between;
@@ -418,6 +434,30 @@ input {
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-registration-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-registration-card {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-registration-card span {
+  color: var(--muted);
+}
+
+.admin-registration-empty {
+  margin: 0;
+  color: var(--muted);
+  padding: 8px 2px;
 }
 
 @media (min-width: 700px) {

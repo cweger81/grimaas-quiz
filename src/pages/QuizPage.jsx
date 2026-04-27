@@ -282,9 +282,17 @@ export default function QuizPage() {
         <p className="quiz-eyebrow">Neste quizkvelder</p>
         <div className="quiz-upcoming-list">
           {upcomingDates.map(item => (
-            <div key={item.Id || item.id} className="quiz-upcoming-item">
+            <a
+              key={item.Id || item.id}
+              className="quiz-upcoming-item quiz-upcoming-link"
+              href={`/quiz-registration?date=${encodeURIComponent(
+                (item.QuizDate || item.quizDate || "").slice(0, 10)
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+            >
               {formatDate(item.QuizDate || item.quizDate)}
-            </div>
+            </a>
           ))}
         </div>
       </div>

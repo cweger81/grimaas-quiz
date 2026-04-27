@@ -126,6 +126,36 @@ export async function deleteUpcomingDate(id) {
   };
 }
 
+export async function registerUpcomingTeam(payload) {
+  const res = await fetch(`${API_URL}/registerupcomingteam`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
+}
+
+export async function getUpcomingRegistrations() {
+  const res = await fetch(`${API_URL}/upcomingregistrations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      adminPassword: localStorage.getItem("adminPassword")
+    })
+  });
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: normalizeList(await readJson(res))
+  };
+}
+
 export async function approveScore(id) {
   const res = await fetch(`${API_URL}/approve`, {
     method: "POST",

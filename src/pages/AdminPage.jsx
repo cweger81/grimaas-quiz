@@ -8,6 +8,7 @@ import {
   deleteUpcomingDate,
   getActiveSession,
   getPendingScores,
+  getUpcomingRegistrations,
   getTeams,
   getUpcomingDates,
   updateScore
@@ -27,6 +28,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [upcomingDates, setUpcomingDates] = useState([]);
+  const [upcomingRegistrations, setUpcomingRegistrations] = useState([]);
   const [newUpcomingDate, setNewUpcomingDate] = useState("");
 
   function parsePoints(value) {
@@ -66,13 +68,17 @@ export default function AdminPage() {
       getPendingScores()
     ]);
 
-    const upcoming = await getUpcomingDates();
+    const [upcoming, registrationsResult] = await Promise.all([
+      getUpcomingDates(),
+      getUpcomingRegistrations()
+    ]);
     const teams = session?.Id ? await getTeams(session.Id) : [];
 
     setScores(pendingScores);
     setActiveSession(session);
     setRegisteredTeams(teams);
     setUpcomingDates(upcoming);
+    setUpcomingRegistrations(registrationsResult.ok ? registrationsResult.data : []);
   }
 
   async function handleLogin() {
@@ -98,6 +104,7 @@ export default function AdminPage() {
     setEditId(null);
     setNewPoints("");
     setUpcomingDates([]);
+    setUpcomingRegistrations([]);
     setNewUpcomingDate("");
   }
 
@@ -127,6 +134,17 @@ export default function AdminPage() {
     });
 
     return Object.values(teams).sort((a, b) => b.total - a.total);
+  }
+
+  function registrationsForDate(quizDate) {
+    const target = new Date(quizDate).toISOString().slice(0, 10);
+
+    return upcomingRegistrations.filter(item => {
+      const itemDate = new Date(item.QuizDate || item.quizDate)
+        .toISOString()
+        .slice(0, 10);
+      return itemDate === target;
+    });
   }
 
   useEffect(() => {
@@ -328,11 +346,35 @@ export default function AdminPage() {
       ) : (
         <div className="admin-upcoming-list">
           {upcomingDates.map(item => (
-            <div key={item.Id || item.id} className="admin-upcoming-card">
-              <span>{formatUpcomingDate(item.QuizDate || item.quizDate)}</span>
-              <button onClick={() => handleDeleteUpcomingDate(item.Id || item.id)}>
-                Slett
-              </button>
+            <div key={item.Id || item.id} className="admin-upcoming-stack">
+              <div className="admin-upcoming-card">
+                <span>{formatUpcomingDate(item.QuizDate || item.quizDate)}</span>
+                <button onClick={() => handleDeleteUpcomingDate(item.Id || item.id)}>
+                  Slett
+                </button>
+              </div>
+
+              <div className="admin-registration-list">
+                {registrationsForDate(item.QuizDate || item.quizDate).length === 0 ? (
+                  <p className="admin-registration-empty">Ingen påmeldte lag ennå</p>
+                ) : (
+                  registrationsForDate(item.QuizDate || item.quizDate).map(registration => (
+                    <div
+                      key={registration.Id || registration.id}
+                      className="admin-registration-card"
+                    >
+                      <strong>{registration.TeamName || registration.teamName}</strong>
+                      <span>
+                        {registration.ParticipantCount || registration.participantCount} deltakere
+                      </span>
+                      <span>
+                        {registration.ContactPerson || registration.contactPerson} -{" "}
+                        {registration.PhoneNumber || registration.phoneNumber}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           ))}
         </div>
