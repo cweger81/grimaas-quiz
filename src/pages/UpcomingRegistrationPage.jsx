@@ -49,7 +49,7 @@ export default function UpcomingRegistrationPage() {
     const count = Number(participantCount);
 
     if (!Number.isInteger(count) || count < 1 || count > 20) {
-      setMessage("Antall deltagere ma vaere mellom 1 og 20.");
+      setMessage("Antall deltagere ma være mellom 1 og 20.");
       return;
     }
 
@@ -62,12 +62,12 @@ export default function UpcomingRegistrationPage() {
     });
 
     if (!result.ok) {
-      setMessage(result.data?.message || "Kunne ikke registrere laget akkurat na.");
+      setMessage(result.data?.message || "Kunne ikke registrere laget akkurat nå.");
       return;
     }
 
     setIsSubmitted(true);
-    setMessage("Pameldingen er registrert. Vi sees pa quiz.");
+    setMessage("Påmeldingen er registrert. Vi sees pa quiz.");
   }
 
   return (
@@ -119,7 +119,7 @@ export default function UpcomingRegistrationPage() {
               </div>
 
               <button className="quiz-primary-button" onClick={handleSubmit}>
-                Send pamelding
+                Send påmelding
               </button>
             </>
           ) : null}
