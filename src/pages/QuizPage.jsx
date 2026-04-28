@@ -51,6 +51,11 @@ function parsePoints(value) {
   return points;
 }
 
+function parseQuizFull(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return normalized === "ja" || normalized === "1" || normalized === "true";
+}
+
 export default function QuizPage() {
   const [password, setPassword] = useState("");
   const [teamName, setTeamName] = useState("");
@@ -75,7 +80,7 @@ export default function QuizPage() {
   }
 
   function isQuizFull(item) {
-    return Number(item?.QuizFull ?? item?.quizFull ?? 0) === 1;
+    return parseQuizFull(item?.QuizFull ?? item?.quizFull);
   }
 
   useEffect(() => {
