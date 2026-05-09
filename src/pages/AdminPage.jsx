@@ -266,17 +266,19 @@ export default function AdminPage() {
         )}
       </section>
 
-      <section className="admin-section">
-        <h2>Start ny quiz</h2>
+      {!activeSession ? (
+        <section className="admin-section">
+          <h2>Start ny quiz</h2>
 
-        <input
-          placeholder="Nytt passord"
-          value={newSessionPassword}
-          onChange={event => setNewSessionPassword(event.target.value)}
-        />
+          <input
+            placeholder="Nytt passord"
+            value={newSessionPassword}
+            onChange={event => setNewSessionPassword(event.target.value)}
+          />
 
-        <button onClick={handleCreateSession}>Start ny quiz</button>
-      </section>
+          <button onClick={handleCreateSession}>Start ny quiz</button>
+        </section>
+      ) : null}
 
       {activeSession ? (
         <section className="admin-section">
