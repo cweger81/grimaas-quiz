@@ -57,6 +57,21 @@ input {
   color: var(--text);
 }
 
+textarea {
+  padding: 10px;
+  font-size: 16px;
+  margin-top: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--field-border);
+  width: 100%;
+  min-height: 110px;
+  box-sizing: border-box;
+  background: var(--field);
+  color: var(--text);
+  resize: vertical;
+  font-family: inherit;
+}
+
 .container {
   display: flex;
   flex-direction: column;
@@ -373,6 +388,23 @@ input {
   width: 100%;
 }
 
+.quiz-tiebreaker-card {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.quiz-tiebreaker-help {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.quiz-textarea {
+  margin-bottom: 10px;
+}
+
 .quiz-round-label {
   margin: 0 0 12px;
   font-size: 24px;
@@ -481,6 +513,132 @@ input {
   padding: 8px 2px;
 }
 
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.admin-nav-link {
+  margin-top: 0;
+}
+
+.admin-section {
+  margin-top: 24px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-round-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-visible-button {
+  background: rgba(140, 207, 132, 0.24);
+  color: var(--text);
+}
+
+.admin-team-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-team-panel {
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.admin-team-panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.admin-team-panel-header p,
+.admin-total-box span {
+  color: var(--muted);
+}
+
+.admin-total-box {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+}
+
+.admin-score-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-score-card {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-score-card input,
+.admin-score-card button {
+  width: 100%;
+}
+
+.admin-score-value {
+  margin: 0 0 10px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.admin-total-editor {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-total-editor input {
+  width: 220px;
+}
+
+.admin-leaderboard-table {
+  width: min(1100px, 100%);
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-leaderboard-head,
+.admin-leaderboard-cell {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-leaderboard-head {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.admin-leaderboard-row {
+  display: contents;
+}
+
+.admin-leaderboard-team {
+  font-size: 18px;
+}
+
 @media (min-width: 700px) {
   .quiz-round-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -514,6 +672,23 @@ input {
   .admin-upcoming-card {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .admin-team-panel-header,
+  .admin-total-editor {
+    flex-direction: column;
+  }
+
+  .admin-total-box {
+    justify-items: start;
+  }
+
+  .admin-score-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-leaderboard-table {
+    grid-template-columns: 1fr;
   }
 
   .leaderboard-page {

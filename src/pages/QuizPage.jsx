@@ -4,7 +4,8 @@ import {
   getActiveSession,
   getUpcomingDates,
   login,
-  submitScore
+  submitScore,
+  submitTieBreaker
 } from "../api";
 
 function getStorageKey(sessionId, suffix) {
@@ -35,6 +36,8 @@ function clearStoredQuizState(targetSessionId) {
     localStorage.removeItem(getStorageKey(sessionId, "team"));
     localStorage.removeItem(getStorageKey(sessionId, "participants"));
     localStorage.removeItem(getStorageKey(sessionId, "submittedRounds"));
+    localStorage.removeItem(getStorageKey(sessionId, "tieBreakerAnswer"));
+    localStorage.removeItem(getStorageKey(sessionId, "tieBreakerSubmitted"));
   }
 
   localStorage.removeItem(ACTIVE_SESSION_KEY);
@@ -69,6 +72,8 @@ export default function QuizPage() {
     3: ""
   });
   const [submittedRounds, setSubmittedRounds] = useState({});
+  const [tieBreakerAnswer, setTieBreakerAnswer] = useState("");
+  const [tieBreakerSubmitted, setTieBreakerSubmitted] = useState(false);
   const [upcomingDates, setUpcomingDates] = useState([]);
 
   function formatDate(date) {
@@ -135,6 +140,10 @@ export default function QuizPage() {
         getStorageKey(activeId, "submittedRounds"),
         {}
       );
+      const storedTieBreakerAnswer =
+        localStorage.getItem(getStorageKey(activeId, "tieBreakerAnswer")) || "";
+      const storedTieBreakerSubmitted =
+        localStorage.getItem(getStorageKey(activeId, "tieBreakerSubmitted")) === "true";
 
       if (!storedTeamId || !storedTeam) {
         clearStoredQuizState(activeId);
@@ -148,6 +157,8 @@ export default function QuizPage() {
           String(storedTeam.participantCount || storedTeam.ParticipantCount || "")
       );
       setSubmittedRounds(storedRounds);
+      setTieBreakerAnswer(storedTieBreakerAnswer);
+      setTieBreakerSubmitted(storedTieBreakerSubmitted);
       setMessage("Lag og runder ble gjenopprettet for denne quizen.");
     }
 
@@ -184,7 +195,13 @@ export default function QuizPage() {
       participantCount
     );
 
-    const nextTeamId = teamRes.id || teamRes.Id;
+    if (!teamRes.ok) {
+      setMessage(teamRes.data?.error || "Kunne ikke registrere laget");
+      return;
+    }
+
+    const createdTeam = teamRes.data;
+    const nextTeamId = createdTeam.id || createdTeam.Id;
     const nextSubmittedRounds = {};
 
     localStorage.setItem(ACTIVE_SESSION_KEY, String(session.sessionId));
@@ -198,17 +215,21 @@ export default function QuizPage() {
     );
     localStorage.setItem(
       getStorageKey(session.sessionId, "team"),
-      JSON.stringify(teamRes)
+      JSON.stringify(createdTeam)
     );
     localStorage.setItem(
       getStorageKey(session.sessionId, "participants"),
       String(participantCount)
     );
+    localStorage.removeItem(getStorageKey(session.sessionId, "tieBreakerAnswer"));
+    localStorage.removeItem(getStorageKey(session.sessionId, "tieBreakerSubmitted"));
 
     setSessionId(session.sessionId);
     setSubmittedRounds(nextSubmittedRounds);
+    setTieBreakerAnswer("");
+    setTieBreakerSubmitted(false);
     setRoundInputs({ 1: "", 2: "", 3: "" });
-    setTeam(teamRes);
+    setTeam(createdTeam);
     setMessage("");
   }
 
@@ -236,7 +257,12 @@ export default function QuizPage() {
       return;
     }
 
-    await submitScore(Number(teamId), round, points);
+    const result = await submitScore(Number(teamId), round, points);
+
+    if (!result.ok) {
+      setMessage(result.data?.message || "Kunne ikke sende poeng");
+      return;
+    }
 
     const updatedRounds = {
       ...submittedRounds,
@@ -251,6 +277,33 @@ export default function QuizPage() {
     setMessage(`Poeng sendt for runde ${round}`);
   }
 
+  async function handleTieBreakerSubmit() {
+    if (!sessionId) {
+      setMessage("Ingen aktiv quiz funnet");
+      return;
+    }
+
+    const teamId = localStorage.getItem(getStorageKey(sessionId, "teamId"));
+    const answer = tieBreakerAnswer.trim();
+
+    if (!teamId || !answer) {
+      setMessage("Skriv inn et utslagssvar");
+      return;
+    }
+
+    const result = await submitTieBreaker(Number(teamId), answer);
+
+    if (!result.ok) {
+      setMessage(result.data?.message || "Kunne ikke sende utslagssvar");
+      return;
+    }
+
+    localStorage.setItem(getStorageKey(sessionId, "tieBreakerAnswer"), answer);
+    localStorage.setItem(getStorageKey(sessionId, "tieBreakerSubmitted"), "true");
+    setTieBreakerSubmitted(true);
+    setMessage("Utslagssvar sendt inn");
+  }
+
   function handleResetDevice() {
     clearStoredQuizState(String(sessionId || ""));
     setPassword("");
@@ -260,6 +313,8 @@ export default function QuizPage() {
     setSessionId(null);
     setRoundInputs({ 1: "", 2: "", 3: "" });
     setSubmittedRounds({});
+    setTieBreakerAnswer("");
+    setTieBreakerSubmitted(false);
     setMessage("Denne enheten er nullstilt for aktiv quiz.");
   }
 
@@ -335,18 +390,18 @@ export default function QuizPage() {
           <div className="quiz-card">
             <img className="brand-logo" src="/grimaas-logo.png" alt="Grimaas logo" />
             <p className="quiz-eyebrow">Grimaas Bryggeri</p>
-            <h1>Fjøset Quiz</h1>
+            <h1>Fjoset Quiz</h1>
             <p className="quiz-intro">
-              Registrer laget ditt og send inn poeng etter hver runde. Passordet står på quiz-arket.
+              Registrer laget ditt og send inn poeng etter hver runde. Passordet star pa quiz-arket.
             </p>
 
-            {message && <p className="quiz-message">{message}</p>}
+            {message ? <p className="quiz-message">{message}</p> : null}
 
             <div className="quiz-form">
               <input
                 placeholder="Lagnavn"
                 value={teamName}
-                onChange={e => setTeamName(e.target.value)}
+                onChange={event => setTeamName(event.target.value)}
               />
 
               <input
@@ -355,13 +410,13 @@ export default function QuizPage() {
                 min="1"
                 max="6"
                 value={participants}
-                onChange={e => setParticipants(e.target.value)}
+                onChange={event => setParticipants(event.target.value)}
               />
 
               <input
                 placeholder="Passord"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={event => setPassword(event.target.value)}
               />
             </div>
 
@@ -414,10 +469,10 @@ export default function QuizPage() {
                     min="0"
                     value={roundInputs[round]}
                     disabled={isSubmitted}
-                    onChange={e =>
+                    onChange={event =>
                       setRoundInputs(current => ({
                         ...current,
-                        [round]: e.target.value
+                        [round]: event.target.value
                       }))
                     }
                   />
@@ -434,7 +489,28 @@ export default function QuizPage() {
             })}
           </div>
 
-          {message && <p className="quiz-message">{message}</p>}
+          <div className="quiz-tiebreaker-card">
+            <p className="quiz-round-kicker">Utslagssporsmal</p>
+            <p className="quiz-tiebreaker-help">
+              Skriv inn svaret deres her. Dette brukes hvis lag ender likt.
+            </p>
+            <textarea
+              className="quiz-textarea"
+              placeholder="Skriv utslagssvaret her"
+              value={tieBreakerAnswer}
+              disabled={tieBreakerSubmitted}
+              onChange={event => setTieBreakerAnswer(event.target.value)}
+            />
+            <button
+              className="quiz-primary-button"
+              disabled={tieBreakerSubmitted}
+              onClick={handleTieBreakerSubmit}
+            >
+              {tieBreakerSubmitted ? "Utslagssvar sendt" : "Send utslagssvar"}
+            </button>
+          </div>
+
+          {message ? <p className="quiz-message">{message}</p> : null}
 
           {renderLeaderboardLink()}
 

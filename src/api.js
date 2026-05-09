@@ -56,7 +56,11 @@ export async function createTeam(name, sessionId, participantCount) {
     body: JSON.stringify({ name, sessionId, participantCount })
   });
 
-  return res.json();
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
 }
 
 export async function getTeams(sessionId) {
@@ -74,7 +78,11 @@ export async function submitScore(teamId, round, points) {
     body: JSON.stringify({ teamId, round, points })
   });
 
-  return res.json();
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
 }
 
 export async function getPendingScores() {
@@ -174,14 +182,22 @@ export async function approveScore(id) {
 }
 
 export async function updateScore(id, points) {
+  const body = {
+    points,
+    adminPassword: localStorage.getItem("adminPassword")
+  };
+
+  if (id?.id) {
+    body.id = id.id;
+  } else {
+    body.teamId = id.teamId;
+    body.round = id.round;
+  }
+
   const res = await fetch(`${API_URL}/updateScore`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id,
-      points,
-      adminPassword: localStorage.getItem("adminPassword")
-    })
+    body: JSON.stringify(body)
   });
 
   return {
@@ -196,6 +212,73 @@ export async function getLeaderboard() {
     cache: "no-store"
   });
   return normalizeList(await res.json());
+}
+
+export async function submitTieBreaker(teamId, answer) {
+  const res = await fetch(`${API_URL}/submittiebreaker`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ teamId, answer })
+  });
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
+}
+
+export async function getAdminLeaderboard() {
+  const res = await fetch(`${API_URL}/scoreboardcontrol`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      adminPassword: localStorage.getItem("adminPassword")
+    })
+  });
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
+}
+
+export async function setRoundVisibility(sessionId, round, visible) {
+  const res = await fetch(`${API_URL}/setroundvisibility`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId,
+      round,
+      visible,
+      adminPassword: localStorage.getItem("adminPassword")
+    })
+  });
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
+}
+
+export async function updateTeamTotal(teamId, total) {
+  const res = await fetch(`${API_URL}/updateteamtotal`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      teamId,
+      total,
+      adminPassword: localStorage.getItem("adminPassword")
+    })
+  });
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: await readJson(res)
+  };
 }
 
 export async function getActiveSession() {

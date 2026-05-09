@@ -1,6 +1,22 @@
 import { useEffect, useState } from "react";
 import { getLeaderboard } from "../api";
 
+function applyCompetitionRanks(teams) {
+  let lastTotal = null;
+  let lastRank = 0;
+
+  return teams.map((team, index) => {
+    const rank = team.total === lastTotal ? lastRank : index + 1;
+    lastTotal = team.total;
+    lastRank = rank;
+
+    return {
+      ...team,
+      rank
+    };
+  });
+}
+
 export default function Leaderboard() {
   const [data, setData] = useState([]);
 
@@ -43,6 +59,7 @@ export default function Leaderboard() {
 
     Object.keys(groups).forEach(date => {
       groups[date].sort((a, b) => b.total - a.total);
+      groups[date] = applyCompetitionRanks(groups[date]);
     });
 
     return groups;
@@ -60,8 +77,8 @@ export default function Leaderboard() {
           <section key={date} className="leaderboard-section">
             <h2 className="leaderboard-date">{date}</h2>
 
-            {teams.map((team, index) => {
-              const isTop3 = index < 3;
+            {teams.map(team => {
+              const isTop3 = team.rank <= 3;
 
               return (
                 <div
@@ -69,16 +86,16 @@ export default function Leaderboard() {
                   className={`leaderboard-row${isTop3 ? " is-top3" : ""}`}
                   style={{
                     color:
-                      index === 0
+                      team.rank === 1
                         ? "#ffd700"
-                        : index === 1
+                        : team.rank === 2
                         ? "#c0c0c0"
-                        : index === 2
+                        : team.rank === 3
                         ? "#cd7f32"
                         : "var(--text)"
                   }}
                 >
-                  <span>#{index + 1}</span>
+                  <span>#{team.rank}</span>
                   <span className="leaderboard-name">{team.name}</span>
                   <span>{team.total}</span>
                 </div>

@@ -1,63 +1,66 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   adminLogin,
-  approveScore,
   closeSession,
   createSession,
-  getActiveSession,
-  getPendingScores,
-  getTeams,
-  updateScore
+  getAdminLeaderboard,
+  setRoundVisibility,
+  updateScore,
+  updateTeamTotal
 } from "../api";
 
+function formatDate(date) {
+  if (!date) {
+    return "";
+  }
+
+  return new Date(date).toLocaleDateString("no-NO", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+}
+
+function parsePoints(value) {
+  const normalized = String(value).replace(",", ".").trim();
+  const points = Number(normalized);
+
+  if (!normalized || !Number.isFinite(points) || points < 0) {
+    return null;
+  }
+
+  return points;
+}
+
 export default function AdminPage() {
-  const [scores, setScores] = useState([]);
-  const [registeredTeams, setRegisteredTeams] = useState([]);
   const [activeSession, setActiveSession] = useState(null);
+  const [visibleRounds, setVisibleRounds] = useState([]);
+  const [teams, setTeams] = useState([]);
   const [newSessionPassword, setNewSessionPassword] = useState("");
-  const [editId, setEditId] = useState(null);
+  const [editKey, setEditKey] = useState("");
   const [newPoints, setNewPoints] = useState("");
-  const [loadingId, setLoadingId] = useState(null);
+  const [totalEditTeamId, setTotalEditTeamId] = useState(null);
+  const [newTotal, setNewTotal] = useState("");
+  const [loadingKey, setLoadingKey] = useState("");
   const [isAdmin, setIsAdmin] = useState(
     () => !!localStorage.getItem("adminPassword")
   );
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  function parsePoints(value) {
-    const normalized = String(value).replace(",", ".").trim();
-    const points = Number(normalized);
+  const load = useCallback(async () => {
+    const result = await getAdminLeaderboard();
 
-    if (!normalized || !Number.isFinite(points) || points < 0) {
-      return null;
+    if (result.status === 401) {
+      logout();
+      return;
     }
 
-    return points;
-  }
-
-  function formatDate(date) {
-    if (!date) return "";
-
-    const value = new Date(date);
-    return value.toLocaleDateString("no-NO", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric"
-    });
-  }
-
-  async function load() {
-    const [session, pendingScores] = await Promise.all([
-      getActiveSession(),
-      getPendingScores()
-    ]);
-
-    const teams = session?.Id ? await getTeams(session.Id) : [];
-
-    setScores(pendingScores);
-    setActiveSession(session);
-    setRegisteredTeams(teams);
-  }
+    const payload = result.data || {};
+    setActiveSession(payload.activeSession || null);
+    setVisibleRounds(payload.visibleRounds || []);
+    setTeams(payload.teams || []);
+  }, []);
 
   async function handleLogin() {
     const result = await adminLogin(password);
@@ -76,39 +79,13 @@ export default function AdminPage() {
   function logout() {
     localStorage.removeItem("adminPassword");
     setIsAdmin(false);
-    setScores([]);
-    setRegisteredTeams([]);
     setActiveSession(null);
-    setEditId(null);
+    setVisibleRounds([]);
+    setTeams([]);
+    setEditKey("");
     setNewPoints("");
-  }
-
-  function groupByTeam(items) {
-    const teams = {};
-
-    items.forEach(item => {
-      const teamName = item.teamName;
-      const points = item.points ?? item.Points;
-      const participantCount =
-        item.participantCount ?? item.ParticipantCount ?? 1;
-
-      if (!teams[teamName]) {
-        teams[teamName] = {
-          teamName,
-          participantCount,
-          total: 0,
-          rounds: []
-        };
-      }
-
-      teams[teamName].total += points;
-      teams[teamName].rounds.push({
-        ...item,
-        points
-      });
-    });
-
-    return Object.values(teams).sort((a, b) => b.total - a.total);
+    setTotalEditTeamId(null);
+    setNewTotal("");
   }
 
   useEffect(() => {
@@ -128,52 +105,7 @@ export default function AdminPage() {
       clearTimeout(initialLoadId);
       clearInterval(intervalId);
     };
-  }, [isAdmin]);
-
-  async function handleUpdate(id) {
-    setLoadingId(id);
-
-    try {
-      const parsedPoints = parsePoints(newPoints);
-
-      if (parsedPoints === null) {
-        alert("Skriv inn gyldige poeng, for eksempel 13,5.");
-        return;
-      }
-
-      const result = await updateScore(id, parsedPoints);
-
-      if (result.status === 401) {
-        alert("Admin-innloggingen utlop. Logg inn pa nytt.");
-        logout();
-        return;
-      }
-
-      setEditId(null);
-      setNewPoints("");
-      await load();
-    } finally {
-      setLoadingId(null);
-    }
-  }
-
-  async function handleApprove(id) {
-    setLoadingId(id);
-
-    try {
-      const result = await approveScore(id);
-
-      if (result.status === 401) {
-        alert("Admin-innloggingen utlop. Logg inn pa nytt.");
-        logout();
-        return;
-      }
-
-      await load();
-    } finally {
-      setLoadingId(null);
-    }
-  }
+  }, [isAdmin, load]);
 
   async function handleCreateSession() {
     if (!newSessionPassword.trim()) {
@@ -206,6 +138,86 @@ export default function AdminPage() {
     await load();
   }
 
+  async function handleShowRound(round) {
+    if (!activeSession?.Id) {
+      return;
+    }
+
+    setLoadingKey(`show:${round}`);
+
+    try {
+      const result = await setRoundVisibility(activeSession.Id, round, true);
+
+      if (result.status === 401) {
+        alert("Admin-innloggingen utlop. Logg inn pa nytt.");
+        logout();
+        return;
+      }
+
+      await load();
+    } finally {
+      setLoadingKey("");
+    }
+  }
+
+  async function handleUpdateRound(teamId, round) {
+    const parsedPoints = parsePoints(newPoints);
+
+    if (parsedPoints === null) {
+      alert("Skriv inn gyldige poeng, for eksempel 13,5.");
+      return;
+    }
+
+    setLoadingKey(`round:${teamId}:${round}`);
+
+    try {
+      const result = await updateScore({ teamId, round }, parsedPoints);
+
+      if (result.status === 401) {
+        alert("Admin-innloggingen utlop. Logg inn pa nytt.");
+        logout();
+        return;
+      }
+
+      setEditKey("");
+      setNewPoints("");
+      await load();
+    } finally {
+      setLoadingKey("");
+    }
+  }
+
+  async function handleUpdateTotal(teamId) {
+    const parsedTotal = parsePoints(newTotal);
+
+    if (parsedTotal === null) {
+      alert("Skriv inn gyldig totalscore.");
+      return;
+    }
+
+    setLoadingKey(`total:${teamId}`);
+
+    try {
+      const result = await updateTeamTotal(teamId, parsedTotal);
+
+      if (result.status === 401) {
+        alert("Admin-innloggingen utlop. Logg inn pa nytt.");
+        logout();
+        return;
+      }
+
+      setTotalEditTeamId(null);
+      setNewTotal("");
+      await load();
+    } finally {
+      setLoadingKey("");
+    }
+  }
+
+  function isRoundVisible(round) {
+    return visibleRounds.some(item => item.round === round && item.isVisible);
+  }
+
   if (!isAdmin) {
     return (
       <div className="container">
@@ -217,12 +229,12 @@ export default function AdminPage() {
             type="password"
             placeholder="Passord"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={event => setPassword(event.target.value)}
           />
 
           <button onClick={handleLogin}>Logg inn</button>
 
-          {error && <p>{error}</p>}
+          {error ? <p>{error}</p> : null}
         </div>
       </div>
     );
@@ -233,116 +245,171 @@ export default function AdminPage() {
       <img className="brand-logo brand-logo-admin" src="/grimaas-logo.png" alt="Grimaas logo" />
       <h1>Admin</h1>
 
-      <button onClick={logout}>Logg ut</button>
+      <div className="admin-toolbar">
+        <button onClick={logout}>Logg ut</button>
+        <a className="quiz-link-button admin-nav-link" href="/adminleaderboard">
+          Admin leaderboard
+        </a>
+      </div>
 
-      <h2>Aktiv quiz</h2>
+      <section className="admin-section">
+        <h2>Aktiv quiz</h2>
+
+        {activeSession ? (
+          <>
+            <p>Dato: {formatDate(activeSession.QuizDate)}</p>
+            <p>Passord: {activeSession.Password}</p>
+            <button onClick={handleCloseSession}>Lukk quiz</button>
+          </>
+        ) : (
+          <p>Ingen aktiv quiz</p>
+        )}
+      </section>
+
+      <section className="admin-section">
+        <h2>Start ny quiz</h2>
+
+        <input
+          placeholder="Nytt passord"
+          value={newSessionPassword}
+          onChange={event => setNewSessionPassword(event.target.value)}
+        />
+
+        <button onClick={handleCreateSession}>Start ny quiz</button>
+      </section>
 
       {activeSession ? (
-        <>
-          <p>Dato: {formatDate(activeSession.QuizDate)}</p>
-          <p>Passord: {activeSession.Password}</p>
-          <button onClick={handleCloseSession}>Lukk quiz</button>
-        </>
-      ) : (
-        <p>Ingen aktiv quiz</p>
-      )}
+        <section className="admin-section">
+          <h2>Vis poeng hver runde</h2>
+          <div className="admin-round-actions">
+            {[1, 2, 3].map(round => {
+              const visible = isRoundVisible(round);
+              const buttonKey = `show:${round}`;
 
-      <h2>Start ny quiz</h2>
+              return (
+                <button
+                  key={round}
+                  className={visible ? "admin-visible-button" : ""}
+                  disabled={visible || loadingKey === buttonKey}
+                  onClick={() => handleShowRound(round)}
+                >
+                  {visible
+                    ? `Runde ${round} vises`
+                    : loadingKey === buttonKey
+                    ? "..."
+                    : `Vis poeng runde ${round}`}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
-      <input
-        placeholder="Nytt passord"
-        value={newSessionPassword}
-        onChange={e => setNewSessionPassword(e.target.value)}
-      />
+      <section className="admin-section">
+        <h2>Lag og poeng</h2>
 
-      <button onClick={handleCreateSession}>Start ny quiz</button>
+        {teams.length === 0 ? (
+          <p>Ingen lag registrert ennå</p>
+        ) : (
+          <div className="admin-team-stack">
+            {teams.map(team => (
+              <article key={team.id} className="admin-team-panel">
+                <div className="admin-team-panel-header">
+                  <div>
+                    <h3>{team.name}</h3>
+                    <p>{team.participantCount} deltakere</p>
+                    <p>
+                      Utslagssvar:{" "}
+                      {team.tieBreakerAnswer ? team.tieBreakerAnswer : "Ikke sendt inn"}
+                    </p>
+                  </div>
 
-      <hr />
+                  <div className="admin-total-box">
+                    <strong>Total: {team.total}</strong>
+                    {team.totalAdjustment ? (
+                      <span>Justeringspoeng: {team.totalAdjustment}</span>
+                    ) : null}
+                  </div>
+                </div>
 
-      <h2>Registrerte lag</h2>
+                <div className="admin-score-grid">
+                  {[1, 2, 3].map(round => {
+                    const roundData = team.rounds[round];
+                    const key = `${team.id}:${round}`;
+                    const isEditing = editKey === key;
+                    const actionKey = `round:${team.id}:${round}`;
 
-      {registeredTeams.length === 0 ? (
-        <p>Ingen lag registrert ennå</p>
-      ) : (
-        <div className="admin-team-list">
-          {registeredTeams.map(team => (
-            <div key={team.Id || team.id} className="admin-team-card">
-              <strong>{team.Name || team.name}</strong>
-              <span>{team.ParticipantCount || team.participantCount} deltakere</span>
-            </div>
-          ))}
-        </div>
-      )}
+                    return (
+                      <div key={round} className="admin-score-card">
+                        <p className="admin-round-pill">Runde {round}</p>
+                        <p className="admin-score-value">{roundData.points}</p>
 
-      <hr />
+                        {isEditing ? (
+                          <>
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              step="0.1"
+                              min="0"
+                              value={newPoints}
+                              onChange={event => setNewPoints(event.target.value)}
+                            />
+                            <button
+                              disabled={loadingKey === actionKey}
+                              onClick={() => handleUpdateRound(team.id, round)}
+                            >
+                              {loadingKey === actionKey ? "..." : "Lagre"}
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setEditKey(key);
+                              setNewPoints(String(roundData.points));
+                            }}
+                          >
+                            Endre poeng
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
 
-      {scores.length === 0 && <p>Ingen pending scores</p>}
-
-      {groupByTeam(scores).map(team => (
-        <div
-          key={team.teamName}
-          style={{
-            background: "#1a1d24",
-            padding: "15px",
-            marginBottom: "15px",
-            borderRadius: "8px",
-            width: "100%"
-          }}
-        >
-          <h2>{team.teamName}</h2>
-          <p>{team.participantCount} deltakere</p>
-          <h3>Totalt: {team.total} poeng</h3>
-          <p>Snitt: {(team.total / team.participantCount).toFixed(1)}</p>
-
-          {team.rounds.map(score => (
-            <div key={score.id || score.Id} style={{ marginTop: "10px" }}>
-              <p className="admin-round-pill">Runde {score.round || score.Round}</p>
-
-              {editId === (score.id || score.Id) ? (
-                <>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    min="0"
-                    value={newPoints}
-                    onChange={e => setNewPoints(e.target.value)}
-                  />
-
-                  <button
-                    onClick={() => handleUpdate(score.id || score.Id)}
-                    disabled={loadingId === (score.id || score.Id)}
-                  >
-                    {loadingId === (score.id || score.Id) ? "..." : "Lagre"}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p>
-                    <strong>{score.points} poeng</strong>
-                  </p>
-
-                  <button
-                    onClick={() => {
-                      setEditId(score.id || score.Id);
-                      setNewPoints(String(score.points));
-                    }}
-                  >
-                    Endre
-                  </button>
-                </>
-              )}
-
-              <button
-                onClick={() => handleApprove(score.id || score.Id)}
-                disabled={loadingId === (score.id || score.Id)}
-              >
-                {loadingId === (score.id || score.Id) ? "..." : "Godkjenn"}
-              </button>
-            </div>
-          ))}
-        </div>
-      ))}
+                <div className="admin-total-editor">
+                  {totalEditTeamId === team.id ? (
+                    <>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.1"
+                        min="0"
+                        value={newTotal}
+                        onChange={event => setNewTotal(event.target.value)}
+                      />
+                      <button
+                        disabled={loadingKey === `total:${team.id}`}
+                        onClick={() => handleUpdateTotal(team.id)}
+                      >
+                        {loadingKey === `total:${team.id}` ? "..." : "Lagre totalscore"}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setTotalEditTeamId(team.id);
+                        setNewTotal(String(team.total));
+                      }}
+                    >
+                      Endre totalscore
+                    </button>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
