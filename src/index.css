@@ -608,35 +608,12 @@ textarea {
   width: 220px;
 }
 
-.admin-leaderboard-table {
-  width: min(1100px, 100%);
-  display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) repeat(3, minmax(0, 1fr));
-  gap: 12px;
+.admin-rounds-shell {
+  width: min(760px, 100%);
 }
 
-.admin-leaderboard-head,
-.admin-leaderboard-cell {
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.admin-leaderboard-head {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.admin-leaderboard-row {
-  display: contents;
-}
-
-.admin-leaderboard-team {
-  font-size: 18px;
+.admin-round-leaderboard {
+  width: 100%;
 }
 
 @media (min-width: 700px) {
@@ -684,10 +661,6 @@ textarea {
   }
 
   .admin-score-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-leaderboard-table {
     grid-template-columns: 1fr;
   }
 

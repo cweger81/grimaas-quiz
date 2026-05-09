@@ -29,6 +29,39 @@ function buildCompetitionRanks(teams, accessor) {
   });
 }
 
+function RoundSection({ title, teams }) {
+  return (
+    <section className="leaderboard-section admin-round-leaderboard">
+      <h2 className="leaderboard-date">{title}</h2>
+
+      {teams.map(team => {
+        const isTop3 = team.rank <= 3;
+
+        return (
+          <div
+            key={team.id}
+            className={`leaderboard-row${isTop3 ? " is-top3" : ""}`}
+            style={{
+              color:
+                team.rank === 1
+                  ? "#ffd700"
+                  : team.rank === 2
+                  ? "#c0c0c0"
+                  : team.rank === 3
+                  ? "#cd7f32"
+                  : "var(--text)"
+            }}
+          >
+            <span>#{team.rank}</span>
+            <span className="leaderboard-name">{team.name}</span>
+            <span>{team.value}</span>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
 export default function AdminLeaderboardPage() {
   const [isAuthorized, setIsAuthorized] = useState(
     () => !!localStorage.getItem("adminPassword")
@@ -93,22 +126,15 @@ export default function AdminLeaderboardPage() {
     [teams]
   );
 
-  const rows = teams.map(team => ({
-    team,
-    round1: round1.find(item => item.id === team.id),
-    round2: round2.find(item => item.id === team.id),
-    round3: round3.find(item => item.id === team.id)
-  }));
-
   if (!isAuthorized) {
     return (
       <div className="container admin-page">
         <div className="admin-login-card">
           <img className="brand-logo" src="/grimaas-logo.png" alt="Grimaas logo" />
           <h1>Admin leaderboard</h1>
-          <p>Logg inn via admin-siden først.</p>
+          <p>Logg inn via admin-siden forst.</p>
           <a className="quiz-link-button" href="/quizadmin">
-            Gå til admin
+            Ga til admin
           </a>
         </div>
       </div>
@@ -119,30 +145,16 @@ export default function AdminLeaderboardPage() {
     <div className="container admin-page">
       <img className="brand-logo brand-logo-admin" src="/grimaas-logo.png" alt="Grimaas logo" />
       <h1>Admin leaderboard</h1>
-      {activeSession ? <p>Aktiv quiz: {new Date(activeSession.QuizDate).toLocaleDateString("no-NO")}</p> : <p>Ingen aktiv quiz</p>}
+      {activeSession ? (
+        <p>Aktiv quiz: {new Date(activeSession.QuizDate).toLocaleDateString("no-NO")}</p>
+      ) : (
+        <p>Ingen aktiv quiz</p>
+      )}
 
-      <div className="admin-leaderboard-table">
-        <div className="admin-leaderboard-head">Lag</div>
-        <div className="admin-leaderboard-head">Runde 1</div>
-        <div className="admin-leaderboard-head">Runde 2</div>
-        <div className="admin-leaderboard-head">Runde 3</div>
-
-        {rows.map(({ team, round1: r1, round2: r2, round3: r3 }) => (
-          <div key={team.id} className="admin-leaderboard-row">
-            <div className="admin-leaderboard-cell admin-leaderboard-team">
-              <strong>{team.name}</strong>
-            </div>
-            <div className="admin-leaderboard-cell">
-              #{r1?.rank ?? "-"} · {r1?.value ?? 0}
-            </div>
-            <div className="admin-leaderboard-cell">
-              #{r2?.rank ?? "-"} · {r2?.value ?? 0}
-            </div>
-            <div className="admin-leaderboard-cell">
-              #{r3?.rank ?? "-"} · {r3?.value ?? 0}
-            </div>
-          </div>
-        ))}
+      <div className="leaderboard-shell admin-rounds-shell">
+        <RoundSection title="Stilling etter runde 1" teams={round1} />
+        <RoundSection title="Stilling etter runde 2" teams={round2} />
+        <RoundSection title="Stilling etter runde 3" teams={round3} />
       </div>
     </div>
   );
