@@ -106,23 +106,11 @@ export default function AdminLeaderboardPage() {
     [teams]
   );
   const round2 = useMemo(
-    () =>
-      buildCompetitionRanks(
-        teams,
-        team => Number(team.rounds[1].points || 0) + Number(team.rounds[2].points || 0)
-      ),
+    () => buildCompetitionRanks(teams, team => Number(team.rounds[2].points || 0)),
     [teams]
   );
   const round3 = useMemo(
-    () =>
-      buildCompetitionRanks(
-        teams,
-        team =>
-          Number(team.rounds[1].points || 0) +
-          Number(team.rounds[2].points || 0) +
-          Number(team.rounds[3].points || 0) +
-          Number(team.totalAdjustment || 0)
-      ),
+    () => buildCompetitionRanks(teams, team => Number(team.rounds[3].points || 0)),
     [teams]
   );
 
@@ -152,9 +140,9 @@ export default function AdminLeaderboardPage() {
       )}
 
       <div className="leaderboard-shell admin-rounds-shell">
-        <RoundSection title="Stilling etter runde 1" teams={round1} />
-        <RoundSection title="Stilling etter runde 2" teams={round2} />
-        <RoundSection title="Stilling etter runde 3" teams={round3} />
+        <RoundSection title="Runde 1" teams={round1} />
+        <RoundSection title="Runde 2" teams={round2} />
+        <RoundSection title="Runde 3" teams={round3} />
       </div>
     </div>
   );

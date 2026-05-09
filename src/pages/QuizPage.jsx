@@ -390,7 +390,7 @@ export default function QuizPage() {
           <div className="quiz-card">
             <img className="brand-logo" src="/grimaas-logo.png" alt="Grimaas logo" />
             <p className="quiz-eyebrow">Grimaas Bryggeri</p>
-            <h1>Fjoset Quiz</h1>
+            <h1>Fjøset Quiz</h1>
             <p className="quiz-intro">
               Registrer laget ditt og send inn poeng etter hver runde. Passordet star pa quiz-arket.
             </p>
@@ -449,6 +449,27 @@ export default function QuizPage() {
             <div className="quiz-badge">{participants} deltakere</div>
           </div>
 
+          <div className="quiz-tiebreaker-card">
+            <p className="quiz-round-kicker">Utslagssporsmal</p>
+            <p className="quiz-tiebreaker-help">
+              Skriv inn svaret deres her. Dette brukes hvis lag ender likt.
+            </p>
+            <textarea
+              className="quiz-textarea"
+              placeholder="Skriv utslagssvaret her"
+              value={tieBreakerAnswer}
+              disabled={tieBreakerSubmitted}
+              onChange={event => setTieBreakerAnswer(event.target.value)}
+            />
+            <button
+              className="quiz-primary-button"
+              disabled={tieBreakerSubmitted}
+              onClick={handleTieBreakerSubmit}
+            >
+              {tieBreakerSubmitted ? "Utslagssvar sendt" : "Send utslagssvar"}
+            </button>
+          </div>
+
           <div className="quiz-round-grid">
             {[1, 2, 3].map(round => {
               const isSubmitted = submittedRounds[round];
@@ -487,27 +508,6 @@ export default function QuizPage() {
                 </div>
               );
             })}
-          </div>
-
-          <div className="quiz-tiebreaker-card">
-            <p className="quiz-round-kicker">Utslagssporsmal</p>
-            <p className="quiz-tiebreaker-help">
-              Skriv inn svaret deres her. Dette brukes hvis lag ender likt.
-            </p>
-            <textarea
-              className="quiz-textarea"
-              placeholder="Skriv utslagssvaret her"
-              value={tieBreakerAnswer}
-              disabled={tieBreakerSubmitted}
-              onChange={event => setTieBreakerAnswer(event.target.value)}
-            />
-            <button
-              className="quiz-primary-button"
-              disabled={tieBreakerSubmitted}
-              onClick={handleTieBreakerSubmit}
-            >
-              {tieBreakerSubmitted ? "Utslagssvar sendt" : "Send utslagssvar"}
-            </button>
           </div>
 
           {message ? <p className="quiz-message">{message}</p> : null}
