@@ -113,6 +113,10 @@ export default function AdminLeaderboardPage() {
     () => buildCompetitionRanks(teams, team => Number(team.rounds[3].points || 0)),
     [teams]
   );
+  const total = useMemo(
+    () => buildCompetitionRanks(teams, team => Number(team.total || 0)),
+    [teams]
+  );
 
   if (!isAuthorized) {
     return (
@@ -143,6 +147,7 @@ export default function AdminLeaderboardPage() {
         <RoundSection title="Runde 1" teams={round1} />
         <RoundSection title="Runde 2" teams={round2} />
         <RoundSection title="Runde 3" teams={round3} />
+        <RoundSection title="Total" teams={total} />
       </div>
     </div>
   );
