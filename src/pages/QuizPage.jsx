@@ -392,7 +392,7 @@ export default function QuizPage() {
             <p className="quiz-eyebrow">Grimaas Bryggeri</p>
             <h1>Fjøset Quiz</h1>
             <p className="quiz-intro">
-              Registrer laget ditt og send inn poeng etter hver runde. Passordet star pa quiz-arket.
+              Registrer laget ditt og send inn poeng etter hver runde. Passordet står på quiz-arket.
             </p>
 
             {message ? <p className="quiz-message">{message}</p> : null}
@@ -450,9 +450,9 @@ export default function QuizPage() {
           </div>
 
           <div className="quiz-tiebreaker-card">
-            <p className="quiz-round-kicker">Utslagssporsmal</p>
+            <p className="quiz-round-kicker">Utslagsspørsmal</p>
             <p className="quiz-tiebreaker-help">
-              Skriv inn svaret deres her. Dette brukes hvis lag ender likt.
+              Skriv inn svaret på utslagsspørsmålet her.
             </p>
             <textarea
               className="quiz-textarea"
