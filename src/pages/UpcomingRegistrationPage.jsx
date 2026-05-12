@@ -28,7 +28,7 @@ export default function UpcomingRegistrationPage() {
   const [participantCount, setParticipantCount] = useState("");
   const quizDate = initialDate;
   const [contactPerson, setContactPerson] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -40,7 +40,7 @@ export default function UpcomingRegistrationPage() {
       !participantCount ||
       !quizDate ||
       !contactPerson.trim() ||
-      !phoneNumber.trim()
+      !email.trim()
     ) {
       setMessage("Fyll ut alle feltene.");
       return;
@@ -58,7 +58,7 @@ export default function UpcomingRegistrationPage() {
       participantCount: count,
       quizDate,
       contactPerson: contactPerson.trim(),
-      phoneNumber: phoneNumber.trim()
+      email: email.trim()
     });
 
     if (!result.ok) {
@@ -112,9 +112,10 @@ export default function UpcomingRegistrationPage() {
                 />
 
                 <input
-                  placeholder="Telefonnummer"
-                  value={phoneNumber}
-                  onChange={event => setPhoneNumber(event.target.value)}
+                  type="email"
+                  placeholder="E-post"
+                  value={email}
+                  onChange={event => setEmail(event.target.value)}
                 />
               </div>
 
