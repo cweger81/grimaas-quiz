@@ -42,6 +42,7 @@ export default function AdminPage() {
   const [totalEditTeamId, setTotalEditTeamId] = useState(null);
   const [newTotal, setNewTotal] = useState("");
   const [loadingKey, setLoadingKey] = useState("");
+  const [savingVisibilityRound, setSavingVisibilityRound] = useState(null);
   const [isAdmin, setIsAdmin] = useState(
     () => !!localStorage.getItem("adminPassword")
   );
@@ -138,15 +139,16 @@ export default function AdminPage() {
     await load();
   }
 
-  async function handleShowRound(round) {
-    if (!activeSession?.Id) {
+  async function handleToggleRound(round) {
+    if (!activeSession?.Id || savingVisibilityRound !== null) {
       return;
     }
 
-    setLoadingKey(`show:${round}`);
+    const nextVisible = !isRoundVisible(round);
+    setSavingVisibilityRound(round);
 
     try {
-      const result = await setRoundVisibility(activeSession.Id, round, true);
+      const result = await setRoundVisibility(activeSession.Id, round, nextVisible);
 
       if (result.status === 401) {
         alert("Admin-innloggingen utlop. Logg inn pa nytt.");
@@ -154,9 +156,20 @@ export default function AdminPage() {
         return;
       }
 
+      if (!result.ok) {
+        alert(result.data?.message || "Kunne ikke endre visningen av poeng. Prøv igjen.");
+        return;
+      }
+
+      setVisibleRounds(current => [
+        ...current.filter(item => item.round !== round),
+        { round, isVisible: nextVisible }
+      ]);
       await load();
+    } catch {
+      alert("Kunne ikke bekrefte visningen av poeng. Sjekk forbindelsen og prøv igjen.");
     } finally {
-      setLoadingKey("");
+      setSavingVisibilityRound(null);
     }
   }
 
@@ -283,22 +296,23 @@ export default function AdminPage() {
       {activeSession ? (
         <section className="admin-section">
           <h2>Vis poeng hver runde</h2>
+          <p>Du kan skjule poengene igjen ved å trykke på samme knapp.</p>
           <div className="admin-round-actions">
             {[1, 2, 3].map(round => {
               const visible = isRoundVisible(round);
-              const buttonKey = `show:${round}`;
 
               return (
                 <button
                   key={round}
                   className={visible ? "admin-visible-button" : ""}
-                  disabled={visible || loadingKey === buttonKey}
-                  onClick={() => handleShowRound(round)}
+                  disabled={savingVisibilityRound !== null}
+                  aria-pressed={visible}
+                  onClick={() => handleToggleRound(round)}
                 >
-                  {visible
-                    ? `Runde ${round} vises`
-                    : loadingKey === buttonKey
-                    ? "..."
+                  {savingVisibilityRound === round
+                    ? "Lagrer..."
+                    : visible
+                    ? `Skjul poeng runde ${round}`
                     : `Vis poeng runde ${round}`}
                 </button>
               );
